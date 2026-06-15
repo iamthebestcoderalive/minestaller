@@ -5,12 +5,32 @@ AGENT_DIR="$HOME/minestaller-agent"
 mkdir -p "$AGENT_DIR"
 cd "$AGENT_DIR"
 
-echo "Downloading agent files from GitHub..."
-curl -sSL "https://raw.githubusercontent.com/barho/minestaller/main/server.js" -o server.js
-curl -sSL "https://raw.githubusercontent.com/barho/minestaller/main/package.json" -o package.json
+echo "Downloading lightweight companion files from GitHub..."
+
+BASE_URL="https://raw.githubusercontent.com/iamthebestcoderalive/minestaller/main"
+FILES=(
+    "server.js"
+    "package.json"
+    "public/index.html"
+    "routes/config.js"
+    "routes/instance.js"
+    "routes/worlds.js"
+    "routes/mods.js"
+    "routes/migrater.js"
+    "utils/nbt.js"
+    "utils/file.js"
+    "utils/minecraft.js"
+    "utils/sys.js"
+)
+
+for f in "${FILES[@]}"; do
+    dest="$AGENT_DIR/$f"
+    mkdir -p "$(dirname "$dest")"
+    curl -sSL "$BASE_URL/$f" -o "$dest"
+done
 
 if command -v node &> /dev/null; then
-    echo "Node.js detected. Installing dependencies and starting agent..."
+    echo "Node.js detected. Starting Minestaller companion agent..."
     npm install
     node server.js
 else

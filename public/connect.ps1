@@ -8,12 +8,35 @@ if (!(Test-Path $agentDir)) {
 }
 Set-Location $agentDir
 
-Write-Host "Downloading agent files from GitHub..." -ForegroundColor Yellow
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/barho/minestaller/main/server.js" -OutFile "server.js"
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/barho/minestaller/main/package.json" -OutFile "package.json"
+Write-Host "Downloading lightweight companion files from GitHub..." -ForegroundColor Yellow
+
+$baseUrl = "https://raw.githubusercontent.com/iamthebestcoderalive/minestaller/main"
+$files = @(
+    "server.js",
+    "package.json",
+    "public/index.html",
+    "routes/config.js",
+    "routes/instance.js",
+    "routes/worlds.js",
+    "routes/mods.js",
+    "routes/migrater.js",
+    "utils/nbt.js",
+    "utils/file.js",
+    "utils/minecraft.js",
+    "utils/sys.js"
+)
+
+foreach ($f in $files) {
+    $dest = Join-Path $agentDir $f
+    $parent = Split-Path $dest -Parent
+    if (!(Test-Path $parent)) {
+        New-Item -ItemType Directory -Path $parent | Out-Null
+    }
+    Invoke-WebRequest -Uri "$baseUrl/$f" -OutFile $dest
+}
 
 if (Get-Command node -ErrorAction SilentlyContinue) {
-    Write-Host "Node.js detected. Installing dependencies..." -ForegroundColor Yellow
+    Write-Host "Node.js detected. Starting Minestaller companion agent..." -ForegroundColor Yellow
     # Launch agent in a new CMD window and keep it running
     Start-Process cmd -ArgumentList "/c npm install && node server.js"
     Write-Host "Agent successfully launched in a separate window!" -ForegroundColor Green
