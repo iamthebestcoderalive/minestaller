@@ -2251,6 +2251,20 @@
             }
             updateQueueFooter();
             loadCompanionIPs();
+
+            // Try to auto-connect to the agent if it is already running
+            try {
+                const res = await fetch('/api/instance');
+                if (res.status === 400 || res.ok) {
+                    document.getElementById('startup-welcome-screen').style.display = 'none';
+                    await fetchInstanceData();
+                    if (!agentPollInterval) {
+                        agentPollInterval = setInterval(fetchInstanceData, 2000);
+                    }
+                }
+            } catch (err) {
+                console.log("Helper agent is offline at startup, waiting for manual connection.");
+            }
         });
 
         function actionInstallRequiredAgent() {
