@@ -1896,12 +1896,6 @@
             }
         }
 
-        // When served from a remote host (Vercel, GitHub Pages, etc.), all API calls
-        // must point directly to the local agent at localhost:5000.
-        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? ''
-            : 'http://localhost:5000';
-
         let config = { lastMinecraftDir: "", instances: {} };
 
         let currentInstancePath = "";
