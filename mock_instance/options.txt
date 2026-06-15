@@ -1,0 +1,2 @@
+graphicsMode:0
+musicVolume:0.0

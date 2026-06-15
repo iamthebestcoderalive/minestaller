@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+/apache-maven-3.9.6/
+
+# Build and Compilation outputs
+/target/
+dependency-reduced-pom.xml
+/temp/
+/temp_extracted/
+*.class
+
+# Configurations & Client Local State
+minestaller_config.json
+
+# Local Playgrounds & Temporary Files
+/scratch/
+.gemini/
+*.tmp
+*.log
+
+# Operating System & Editors
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini

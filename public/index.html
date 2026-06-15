@@ -1,0 +1,3681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minestaller - Minecraft Utility Tool</title>
+    <!-- Google Fonts for retro Bloxy theme -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Tabler Icons Webfont -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <script>
+        // Apply theme immediately to prevent flashing
+        (function() {
+            const themes = {
+                dark: {
+                    '--bg-base': '#0f1219',
+                    '--bg-panel': '#161a23',
+                    '--bg-card': '#1a1f2e',
+                    '--accent': '#3b82f6',
+                    '--text-primary': '#f3f4f6',
+                    '--text-secondary': '#9ca3af',
+                    '--text-dim': '#4b5563',
+                    '--border': '#272e3f',
+                    '--border-sub': '#1e2535',
+                    '--font-sans': 'ui-sans-serif, system-ui, sans-serif',
+                    '--font-mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                },
+                light: {
+                    '--bg-base': '#f3f4f6',
+                    '--bg-panel': '#ffffff',
+                    '--bg-card': '#f9fafb',
+                    '--accent': '#2563eb',
+                    '--text-primary': '#1f2937',
+                    '--text-secondary': '#4b5563',
+                    '--text-dim': '#9ca3af',
+                    '--border': '#e5e7eb',
+                    '--border-sub': '#f3f4f6',
+                    '--font-sans': 'ui-sans-serif, system-ui, sans-serif',
+                    '--font-mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                },
+                'tokyo lights': {
+                    '--bg-base': '#1a1b26',
+                    '--bg-panel': '#16161e',
+                    '--bg-card': '#24283b',
+                    '--accent': '#7aa2f7',
+                    '--text-primary': '#a9b1d6',
+                    '--text-secondary': '#787c99',
+                    '--text-dim': '#565f89',
+                    '--border': '#383e5a',
+                    '--border-sub': '#292e42',
+                    '--font-sans': 'ui-sans-serif, system-ui, sans-serif',
+                    '--font-mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                },
+                nord: {
+                    '--bg-base': '#2e3440',
+                    '--bg-panel': '#3b4252',
+                    '--bg-card': '#434c5e',
+                    '--accent': '#88c0d0',
+                    '--text-primary': '#eceff4',
+                    '--text-secondary': '#d8dee9',
+                    '--text-dim': '#4c566a',
+                    '--border': '#4c566a',
+                    '--border-sub': '#3b4252',
+                    '--font-sans': 'ui-sans-serif, system-ui, sans-serif',
+                    '--font-mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                },
+                dracula: {
+                    '--bg-base': '#282a36',
+                    '--bg-panel': '#21222c',
+                    '--bg-card': '#1d1f27',
+                    '--accent': '#bd93f9',
+                    '--text-primary': '#f8f8f2',
+                    '--text-secondary': '#6272a4',
+                    '--text-dim': '#44475a',
+                    '--border': '#44475a',
+                    '--border-sub': '#282a36',
+                    '--font-sans': 'ui-sans-serif, system-ui, sans-serif',
+                    '--font-mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                },
+                gruvbox: {
+                    '--bg-base': '#1d2021',
+                    '--bg-panel': '#282828',
+                    '--bg-card': '#3c3836',
+                    '--accent': '#d65d0e',
+                    '--text-primary': '#ebdbb2',
+                    '--text-secondary': '#a89984',
+                    '--text-dim': '#665c54',
+                    '--border': '#504945',
+                    '--border-sub': '#282828',
+                    '--font-sans': 'ui-sans-serif, system-ui, sans-serif',
+                    '--font-mono': 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
+                },
+                bloxy: {
+                    '--bg-base': '#13100f',
+                    '--bg-panel': '#1a1614',
+                    '--bg-card': '#241f1d',
+                    '--accent': '#ff9d00',
+                    '--text-primary': '#ffffff',
+                    '--text-secondary': '#c0c0c0',
+                    '--text-dim': '#7c726c',
+                    '--border': '#322b28',
+                    '--border-sub': '#241f1c',
+                    '--font-sans': "'Rubik', ui-sans-serif, system-ui, sans-serif",
+                    '--font-mono': "'Rubik', monospace"
+                }
+            };
+            const currentTheme = localStorage.getItem('minestaller-theme') || 'dark';
+            const palette = themes[currentTheme] || themes['dark'];
+            const root = document.documentElement;
+            for (const [key, value] of Object.entries(palette)) {
+                root.style.setProperty(key, value);
+            }
+            window.__initialTheme = currentTheme;
+            window.__themes = themes;
+        })();
+    </script>
+
+    <style>
+        /* ==========================================
+         * Section 1: Design Tokens Variables
+         * ========================================== */
+        :root {
+            --bg-base: #0f1219;
+            --bg-panel: #161a23;
+            --bg-card: #1a1f2e;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --purple: #8b5cf6;
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-dim: #4b5563;
+            --border: #272e3f;
+            --border-sub: #1e2535;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            --font-sans: ui-sans-serif, system-ui, sans-serif;
+        }
+
+        /* ==========================================
+         * Section 2: General Layout Reset
+         * ========================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            font-size: 13px;
+            line-height: 1.5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        button, input, select, textarea {
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            background: none;
+            border: none;
+            outline: none;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent);
+        }
+
+        /* ==========================================
+         * Section 3: App Surface Layout Containers
+         * ========================================== */
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border);
+            padding: 10px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-logo {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: -0.01em;
+        }
+        .header-logo .sep {
+            color: var(--text-dim);
+        }
+        .header-logo .sub {
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        .header-version-pill {
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        .status-line {
+            background: #0a0d14;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            height: 32px;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .status-segment {
+            padding: 0 16px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 6px;
+        }
+        .status-segment .label {
+            color: var(--text-dim);
+        }
+        .status-segment .value {
+            font-weight: 500;
+        }
+        .status-segment.status-ready {
+            margin-left: auto;
+            border-left: 1px solid var(--border);
+            border-right: none;
+        }
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+        .sidebar {
+            width: 200px;
+            background: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 8px;
+        }
+        .tab-btn {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-align: left;
+            padding: 8px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.1s ease-in-out;
+            border: 1px solid transparent;
+        }
+        .tab-btn i {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .tab-btn.active {
+            color: var(--text-primary);
+            background: rgba(59, 130, 246, 0.12);
+            border-left: 2px solid var(--accent);
+            border-radius: 0 4px 4px 0;
+            font-weight: 700;
+        }
+        .workspace {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .workspace.loading {
+            opacity: 0.4;
+            pointer-events: none;
+            transition: opacity 0.15s ease-in-out;
+        }
+        .panel {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 100%;
+        }
+        .panel.active {
+            display: flex;
+        }
+
+        /* ==========================================
+         * Section 4: Dashboard View Cards
+         * ========================================== */
+        .dashboard-layout {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-sub);
+            border-radius: 6px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .stat-label {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .stat-sub {
+            font-size: 10px;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+        .dashboard-middle-row {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+        .dashboard-col {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .card {
+            border-radius: 6px;
+            border: 1px solid var(--border-sub);
+            background: var(--bg-card);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-sub);
+            padding-bottom: 6px;
+            text-transform: uppercase;
+        }
+        .card-header i {
+            font-size: 14px;
+            color: var(--accent);
+        }
+        .list-container {
+            display: flex;
+            flex-direction: column;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .list-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-sub);
+        }
+        .list-row:last-child {
+            border-bottom: none;
+        }
+        .list-row-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .dot.active {
+            background: var(--success);
+        }
+        .dot.inactive {
+            background: var(--text-dim);
+        }
+        .dot.amber {
+            background: var(--warning);
+        }
+        .list-row-name {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .pill-tag {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .pill-tag:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.2);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .pill-tag:active {
+            transform: translateY(0);
+        }
+        .pill-tag.active-green {
+            background: rgba(16, 185, 129, 0.12);
+            color: var(--success);
+        }
+        .pill-tag.inactive-purple {
+            background: rgba(139, 92, 246, 0.12);
+            color: var(--purple);
+        }
+        .pill-tag.active-amber {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--warning);
+        }
+        .modpack-card {
+            border-radius: 6px;
+            border: 1px solid var(--border-sub);
+            background: var(--bg-card);
+            padding: 14px;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .modpack-card.not-detected {
+            border: 1px dashed var(--border);
+            background: transparent;
+            justify-content: center;
+            gap: 8px;
+        }
+        .modpack-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--bg-base);
+            flex-shrink: 0;
+        }
+        .modpack-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            overflow: hidden;
+        }
+        .modpack-title {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .modpack-meta {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .badge {
+            font-family: var(--font-mono);
+            font-size: 8px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge.accent-badge {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            align-self: flex-start;
+        }
+        .profile-card {
+            border-radius: 6px;
+            border: 1px solid var(--border-sub);
+            background: var(--bg-card);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            border-bottom: 1px solid var(--border-sub);
+            padding-bottom: 6px;
+        }
+        .profile-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .profile-label {
+            color: var(--text-dim);
+        }
+        .profile-value {
+            color: var(--text-primary);
+        }
+        .actions-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.1s ease-in-out;
+            text-transform: lowercase;
+            border: 1px solid transparent;
+        }
+        .action-btn i {
+            font-size: 15px;
+        }
+        .action-btn.btn-primary {
+            background: var(--accent);
+            color: var(--text-primary);
+            border: 1px solid var(--accent);
+        }
+        .action-btn.btn-primary:hover {
+            background: var(--text-primary);
+            color: var(--bg-base);
+            border-color: var(--text-primary);
+        }
+        .action-btn.btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .action-btn.btn-secondary:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.06);
+        }
+
+        /* ==========================================
+         * Section 5: Form Controls & Modal overlays
+         * ========================================== */
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-label {
+            color: var(--text-secondary);
+            font-size: 11px;
+        }
+        .text-input, .select-input {
+            width: 100%;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: var(--text-primary);
+            transition: border-color 0.1s ease-in-out;
+        }
+        .text-input:focus, .select-input:focus {
+            border-color: var(--accent);
+        }
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .check-input {
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-base);
+            cursor: pointer;
+            appearance: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .check-input:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .check-input:checked::after {
+            content: "x";
+            color: var(--bg-base);
+            font-weight: bold;
+            font-size: 12px;
+            line-height: 1;
+        }
+        .btn {
+            padding: 6px 14px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.1s ease-in-out;
+            display: inline-block;
+        }
+        .btn:hover {
+            background: var(--border);
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: var(--text-primary);
+            border-color: var(--accent);
+        }
+        .btn-primary:hover {
+            background: var(--text-primary);
+            color: var(--bg-base);
+            border-color: var(--text-primary);
+        }
+        .btn-warning {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+        .btn-warning:hover {
+            background: var(--warning);
+            color: var(--bg-base);
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 18, 25, 0.9);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .progress-card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .progress-label {
+            font-family: var(--font-sans);
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .progress-track {
+            height: 20px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.1s ease-out;
+        }
+        .progress-text {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+        .progress-console {
+            height: 140px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--success);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        /* ==========================================
+         * Section 6: Sliding Context Pane Drawer
+         * ========================================== */
+        .context-pane {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 380px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            transform: translateX(100%);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 100;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            overflow-y: auto;
+        }
+        .context-pane.open {
+            transform: translateX(0);
+        }
+        .context-control-row {
+            display: flex;
+            justify-content: flex-end;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+        .context-close-btn {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-base);
+            transition: all 0.1s ease-in-out;
+            text-transform: lowercase;
+            font-weight: bold;
+        }
+        .context-close-btn:hover {
+            color: var(--warning);
+            border-color: var(--warning);
+        }
+        .context-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-top: 4px;
+        }
+        .context-title {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 13px;
+            text-transform: lowercase;
+        }
+
+        /* ==========================================
+         * Section 7: Addon store items
+         * ========================================== */
+        .search-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-sub);
+            padding: 10px 14px;
+            cursor: pointer;
+            transition: border-color 0.1s ease-in-out;
+            margin-bottom: 6px;
+            border-radius: 6px;
+        }
+        .search-row:hover {
+            border-color: var(--accent);
+        }
+        .search-row-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .search-row-title {
+            font-family: var(--font-sans);
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .search-row-sub {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .search-row-type {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            padding: 2px 4px;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+        .search-row-icon-wrapper {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-base);
+            border: 2px solid var(--border-grid);
+        }
+        .search-row-icon-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .search-row-icon-fallback {
+            font-family: var(--font-display);
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        .cart-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .cart-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-base);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+        .cart-row-remove {
+            color: var(--warning);
+            cursor: pointer;
+            font-weight: bold;
+            padding: 2px 4px;
+        }
+        .cart-row-remove:hover {
+            background: var(--border);
+        }
+
+        /* ==========================================
+         * Section 8: Worlds Manager Items
+         * ========================================== */
+        .worlds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .world-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-sub);
+            padding: 12px;
+            cursor: pointer;
+            transition: border-color 0.1s ease-in-out;
+        }
+        .world-card:hover {
+            border-color: var(--accent);
+        }
+        .world-card.selected {
+            background: var(--border-sub);
+            border-color: var(--accent);
+        }
+        .world-card-name {
+            font-family: var(--font-mono);
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .world-card-meta {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .datapacks-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .datapacks-list {
+            border: 1px solid var(--border);
+            background: var(--bg-base);
+            border-radius: 6px;
+            height: 140px;
+            overflow-y: auto;
+            padding: 6px;
+        }
+        .datapack-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 6px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+        }
+        .datapack-item:hover {
+            background: var(--bg-panel);
+        }
+        .datapack-action-del {
+            color: var(--warning);
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .footer {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border);
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            color: var(--text-dim);
+            height: 28px;
+        }
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .footer-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+        }
+        .footer-dot.green {
+            background: var(--success);
+        }
+        .footer-dot.red {
+            background: #ef4444;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        /* ==========================================
+         * Section 9: Pagination Controls Styling
+         * ========================================== */
+        .pagination-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+            padding: 8px 0;
+            border-top: 1px solid var(--border-sub);
+        }
+        .page-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.1s ease-in-out;
+            background: var(--bg-base);
+        }
+        .page-btn:hover:not(:disabled) {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.06);
+        }
+        .page-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        .page-btn.active {
+            background: var(--accent);
+            color: var(--text-primary);
+            border-color: var(--accent);
+        }
+
+        /* ==========================================
+         * Section 10: Media Queries for Mobile Responsive Layout
+         * ========================================== */
+        @media (max-width: 768px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+            }
+            .header {
+                padding: 8px 12px;
+            }
+            .header-logo .sep, .header-logo .sub {
+                display: none;
+            }
+            .status-line {
+                font-size: 10px;
+                height: auto;
+                padding: 4px 0;
+                flex-wrap: wrap;
+                white-space: normal;
+            }
+            .status-segment {
+                padding: 2px 10px;
+                border-right: 1px solid var(--border);
+                height: auto;
+            }
+            .status-segment.status-ready {
+                margin-left: 0;
+                border-left: none;
+            }
+            .main-layout {
+                flex-direction: column;
+                height: auto;
+                overflow: visible;
+            }
+            .sidebar {
+                width: 100%;
+                flex-direction: row;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 6px;
+                gap: 4px;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+            }
+            .tab-btn {
+                font-size: 11px;
+                padding: 6px 10px;
+                flex-shrink: 0;
+            }
+            .tab-btn.active {
+                border-left: 1px solid transparent;
+                border-bottom: 2px solid var(--accent);
+                border-radius: 4px 4px 0 0;
+            }
+            .sidebar div[style*="margin-top:auto"] {
+                display: none !important; /* Hide active instance bottom tag on mobile */
+            }
+            .workspace {
+                padding: 10px;
+                overflow-y: visible;
+            }
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .stat-card {
+                padding: 10px;
+            }
+            .stat-value {
+                font-size: 18px;
+            }
+            .dashboard-middle-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .actions-row {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .action-btn {
+                padding: 8px;
+                font-size: 11px;
+            }
+            .context-pane {
+                width: 100% !important;
+                border-left: none;
+                border-top: 1px solid var(--border);
+                transform: translateY(100%);
+            }
+            .context-pane.open {
+                transform: translateY(0);
+            }
+        }
+        
+        /* Connection Modal Tooltips */
+        .tooltip-container {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip-container:hover .tooltip-text {
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Panel -->
+    <header class="header">
+        <div class="header-logo">minestaller <span class="sep">//</span> <span class="sub">utility_hub</span></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <button class="btn" id="header-cart-btn" style="padding: 4px 10px; font-size: 11px; display: flex; align-items: center; gap: 6px; font-weight: bold; border-color: var(--border);" onclick="openCartPane()">
+                <i class="ti ti-shopping-cart" style="font-size: 13px; color: var(--accent);"></i> cart: <span id="header-cart-count" style="color: var(--accent); font-weight: bold;">0</span>
+            </button>
+            <div class="header-version-pill">v1.0.0</div>
+        </div>
+    </header>
+
+    <!-- Signature Status Console Line -->
+    <section class="status-line" id="status-line">
+        <div class="status-segment">
+            <span class="label">folder:</span>
+            <span class="value" id="status-dir">--</span>
+        </div>
+        <div class="status-segment">
+            <span class="label">version:</span>
+            <span class="value" id="status-version">--</span>
+        </div>
+        <div class="status-segment">
+            <span class="label">loader:</span>
+            <span class="value" id="status-loader">--</span>
+        </div>
+        <div class="status-segment status-ready">
+            <span class="value" id="status-state" style="color: var(--success);">● ready</span>
+        </div>
+    </section>
+
+    <!-- Main Workspace Layout -->
+    <main class="main-layout">
+        
+        <!-- Left Sidebar Navigation -->
+        <nav class="sidebar" role="tablist">
+            <button class="tab-btn active" role="tab" id="btn-dash" onclick="switchTab('dash')">
+                <i class="ti ti-layout-dashboard"></i> dashboard
+            </button>
+            <button class="tab-btn" role="tab" id="btn-mods" onclick="switchTab('mods')">
+                <i class="ti ti-download"></i> addon_installer
+            </button>
+            <button class="tab-btn" role="tab" id="btn-worlds" onclick="switchTab('worlds')">
+                <i class="ti ti-world"></i> worlds_manager
+            </button>
+            <button class="tab-btn" role="tab" id="btn-settings" onclick="switchTab('settings')">
+                <i class="ti ti-settings"></i> settings
+            </button>
+            <button class="tab-btn" role="tab" id="btn-porter" onclick="switchTab('porter')">
+                <i class="ti ti-arrows-right-left"></i> launcher_migrater
+            </button>
+
+            <!-- Pinned active instance label bottom -->
+            <div style="margin-top:auto; font-family:var(--font-mono); font-size:10px; color:var(--text-dim);">
+                active instance:<br>
+                <span id="sidebar-active-instance" style="color:var(--accent); font-weight:bold;">--</span>
+            </div>
+        </nav>
+
+        <!-- Right Side central panels workspace -->
+        <section class="workspace">
+            
+            <!-- Panel 1: Dashboard -->
+            <div class="panel active" id="panel-dash">
+                <div class="dashboard-layout">
+                    
+                    <!-- Stat Cards Row -->
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">mc version</span>
+                            <span class="stat-value" id="stat-version" style="color: var(--accent);">--</span>
+                            <span class="stat-sub">release</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">mods installed</span>
+                            <span class="stat-value" id="stat-mods" style="color: var(--text-primary);">0</span>
+                            <span class="stat-sub">in instance</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">resourcepacks</span>
+                            <span class="stat-value" id="stat-resourcepacks" style="color: var(--purple);">0</span>
+                            <span class="stat-sub" id="stat-resourcepacks-active">0 active</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">shaders</span>
+                            <span class="stat-value" id="stat-shaders" style="color: var(--warning);">0</span>
+                            <span class="stat-sub" id="stat-shaders-active">0 active</span>
+                        </div>
+                    </div>
+
+                    <!-- Middle Row: Resourcepacks, Shaders, Modpacks, Profile -->
+                    <div class="dashboard-middle-row">
+                        <!-- Column 1: Lists -->
+                        <div class="dashboard-col">
+                            <!-- Resourcepacks -->
+                            <div class="card">
+                                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-image"></i> resourcepacks</span>
+                                    <div style="display:flex; gap:8px; align-items:center; text-transform:none; font-weight:500; font-size:10px;">
+                                        <a href="#" onclick="event.preventDefault(); toggleAllResourcepacks(true)" style="color:var(--accent); text-decoration:none; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">activate all</a>
+                                        <span style="color:var(--border-sub); width:1px; height:8px; background:var(--border-sub);"></span>
+                                        <a href="#" onclick="event.preventDefault(); toggleAllResourcepacks(false)" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--warning)'" onmouseout="this.style.color='var(--text-secondary)'">deactivate all</a>
+                                    </div>
+                                </div>
+                                <div class="list-container" id="dash-resourcepacks-list">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+                            <!-- Shaders -->
+                            <div class="card">
+                                <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                                    <span style="display:flex; align-items:center; gap:8px;"><i class="ti ti-sparkles"></i> shaders</span>
+                                    <div style="display:flex; gap:8px; align-items:center; text-transform:none; font-weight:500; font-size:10px;" id="dash-shaders-actions">
+                                        <!-- Injected dynamically -->
+                                    </div>
+                                </div>
+                                <div class="list-container" id="dash-shaders-list">
+                                    <!-- Injected -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Column 2: Status & Info -->
+                        <div class="dashboard-col">
+                            <!-- Modpack card -->
+                            <div id="dash-modpack-container">
+                                <!-- Injected -->
+                            </div>
+
+                            <!-- Instance profile card -->
+                            <div class="profile-card">
+                                <div class="card-header" style="border-bottom:none; padding-bottom:0;">
+                                    <i class="ti ti-settings-2"></i> instance profile
+                                </div>
+                                <div class="profile-row">
+                                    <span class="profile-label">java runtime</span>
+                                    <span class="profile-value" id="profile-java">--</span>
+                                </div>
+                                <div class="profile-row">
+                                    <span class="profile-label">allocated ram</span>
+                                    <span class="profile-value" id="profile-ram">--</span>
+                                </div>
+                                <div class="profile-row">
+                                    <span class="profile-label">worlds detected</span>
+                                    <span class="profile-value" id="profile-worlds" style="color: var(--success); font-weight: bold;">0</span>
+                                </div>
+                                <div class="profile-row">
+                                    <span class="profile-label">instance size</span>
+                                    <span class="profile-value" id="profile-size">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Row -->
+                    <div class="actions-row">
+                        <button class="action-btn btn-primary" onclick="switchTab('mods')">
+                            <i class="ti ti-search"></i> browse mods
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="openThemeSelector()">
+                            <i class="ti ti-palette"></i> change theme
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="openInstanceFolder()">
+                            <i class="ti ti-folder"></i> open folder
+                        </button>
+                        <button class="action-btn btn-secondary" onclick="fetchInstanceData()">
+                            <i class="ti ti-refresh"></i> sync
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Panel 2: Addon Installer (Search Modrinth) -->
+            <div class="panel" id="panel-mods">
+                <div class="card">
+                    <div class="card-header"><i class="ti ti-search"></i> modrinth query console</div>
+                    <div style="display:flex; gap: 8px;">
+                        <input type="text" class="text-input" id="search-input" placeholder="Search mods, resource packs, shaders..." onkeydown="if(event.key==='Enter') performSearch()">
+                        <select class="select-input" id="search-type-select" style="width: 150px;" onchange="performSearch()">
+                            <option value="mod">mods</option>
+                            <option value="resourcepack">resource packs</option>
+                            <option value="shader">shaders</option>
+                            <option value="modpack">modpacks</option>
+                            <option value="datapack">datapacks</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="performSearch()">search</button>
+                    </div>
+                </div>
+
+                <div class="card" style="flex:1;">
+                    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>search results</span>
+                        <div class="check-row">
+                            <input type="checkbox" class="check-input" id="cart-mode-check" onchange="toggleCartMode()">
+                            <span class="form-label" style="text-transform:lowercase;">enable cart mode</span>
+                        </div>
+                    </div>
+                    <div id="search-results-container" style="overflow-y:auto; flex:1;">
+                        <div style="color:var(--text-secondary); text-align:center; padding:20px;">query modrinth database above.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 3: Worlds Manager -->
+            <div class="panel" id="panel-worlds">
+                <div class="card" style="flex:1;">
+                    <div class="card-header"><i class="ti ti-world"></i> saves directory worlds</div>
+                    <div class="worlds-grid" id="worlds-grid-container">
+                        <div style="color:var(--text-secondary); padding:20px;">no worlds loaded.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 4: Settings -->
+            <div class="panel" id="panel-settings">
+                <div class="card">
+                    <div class="card-header"><i class="ti ti-settings"></i> path configurations</div>
+                    <div class="form-row">
+                        <div class="form-label">minecraft folder directory</div>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="text-input" id="settings-dir-input" placeholder="C:\Users\username\AppData\Roaming\.minecraft">
+                            <button class="btn" style="flex-shrink:0;" onclick="openDirBrowser()">browse...</button>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 12px;">
+                        <div class="form-label">auto-detected launcher instances</div>
+                        <select class="select-input" id="detected-instances-select" onchange="selectDetectedInstance(this)">
+                            <option value="">-- select detected instance --</option>
+                        </select>
+                    </div>
+                    <div style="margin-top: 16px;">
+                        <button class="btn btn-primary" onclick="saveSettings()">save configurations</button>
+                    </div>
+                </div>
+
+                <!-- Live Companion Remote Control Card -->
+                <div class="card" style="margin-top: 16px;">
+                    <div class="card-header"><i class="ti ti-device-mobile"></i> live companion remote control</div>
+                    <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px;">
+                        Connect your phone, tablet, or secondary monitor to remote control this dashboard on your local Wi-Fi network.
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-label">select network IP / adapter</div>
+                        <select class="select-input" id="companion-ip-select" onchange="generateCompanionQRCode(this.value)">
+                            <option value="">loading network adapters...</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; margin-top: 14px; flex-wrap: wrap; align-items: center;">
+                        <!-- QR Code Container -->
+                        <div style="background: white; padding: 10px; border-radius: 6px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; width: 140px; height: 140px; flex-shrink: 0;" id="companion-qr-wrapper">
+                            <img id="companion-qr-image" style="width: 100%; height: 100%; object-fit: contain; display: none;" alt="QR Code">
+                            <span id="companion-qr-loading" style="color: #1a1f2e; font-family: var(--font-mono); font-size: 10px; font-weight: bold; text-align: center;">loading QR...</span>
+                        </div>
+
+                        <!-- Instructions and Link -->
+                        <div style="display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 200px;">
+                            <div style="font-family: var(--font-mono); font-size: 11px;">
+                                <span style="color: var(--text-dim);">URL:</span>
+                                <a id="companion-link" href="#" target="_blank" style="color: var(--accent); font-weight: bold; text-decoration: none; word-break: break-all;">--</a>
+                            </div>
+                            <div style="font-family: var(--font-sans); font-size: 11px; color: var(--text-secondary); line-height: 1.4; margin-top: 4px;">
+                                1. Connect your device to the same Wi-Fi network.<br>
+                                2. Scan the QR code using your device's camera.<br>
+                                3. Control your mods, cart, worlds, and settings remotely!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel 5: Launcher Migrater -->
+            <div class="panel" id="panel-porter">
+                <div class="card">
+                    <div class="card-header"><i class="ti ti-arrows-right-left"></i> launcher migrater & porter</div>
+                    <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 4px;">
+                        migrate/merge your profile data (mods, configs, resourcepacks, shaders, saves) across different launcher installation profiles.
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <!-- Source Instance Card -->
+                    <div class="card">
+                        <div class="card-header"><i class="ti ti-login"></i> source profile</div>
+                        <div class="form-row">
+                            <div class="form-label">select auto-detected source folder</div>
+                            <select class="select-input" id="porter-source-select" onchange="selectPorterDetectedInstance('source', this)">
+                                <option value="">-- select source profile --</option>
+                            </select>
+                        </div>
+                        <div class="form-row" style="margin-top: 10px;">
+                            <div class="form-label">or enter manual source folder path</div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" class="text-input" id="porter-source-input" placeholder="C:\Users\username\AppData\Roaming\.minecraft">
+                                <button class="btn" style="flex-shrink:0;" onclick="openDirBrowser('porter-source-input')">browse...</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Destination Instance Card -->
+                    <div class="card">
+                        <div class="card-header"><i class="ti ti-logout"></i> destination profile</div>
+                        <div class="form-row">
+                            <div class="form-label">select auto-detected destination folder</div>
+                            <select class="select-input" id="porter-dest-select" onchange="selectPorterDetectedInstance('dest', this)">
+                                <option value="">-- select destination profile --</option>
+                            </select>
+                        </div>
+                        <div class="form-row" style="margin-top: 10px;">
+                            <div class="form-label">or enter manual destination folder path</div>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" class="text-input" id="porter-dest-input" placeholder="C:\Users\username\curseforge\minecraft\Instances\MyPack">
+                                <button class="btn" style="flex-shrink:0;" onclick="openDirBrowser('porter-dest-input')">browse...</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sync configurations card -->
+                <div class="card">
+                    <div class="card-header"><i class="ti ti-settings"></i> sync components</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 4px;">
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-sync-mods" checked>
+                            <span class="form-label">mods</span>
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-sync-config" checked>
+                            <span class="form-label">mod configs</span>
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-sync-resourcepacks" checked>
+                            <span class="form-label">resource packs</span>
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-sync-shaders" checked>
+                            <span class="form-label">shaders</span>
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-sync-saves" checked>
+                            <span class="form-label">world saves</span>
+                        </label>
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-sync-settings" checked>
+                            <span class="form-label">options / keybinds</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; margin-top: 12px; border-top: 1px solid var(--border-sub); padding-top: 12px;">
+                        <label class="check-row">
+                            <input type="checkbox" class="check-input" id="porter-clear-dest">
+                            <span class="form-label" style="color: var(--warning); font-weight: bold;">clear destination folder before copying</span>
+                        </label>
+                    </div>
+
+                    <div style="margin-top: 12px;">
+                        <button class="btn btn-primary" onclick="portProfileData()" style="padding: 8px 16px;">port profile data</button>
+                    </div>
+                </div>
+
+                <!-- Console Output Card -->
+                <div class="card" style="flex:1; min-height: 200px;">
+                    <div class="card-header"><i class="ti ti-terminal"></i> migration process console</div>
+                    <div id="porter-console-logs" style="height: 160px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px; padding: 10px; overflow-y: auto; font-family: var(--font-mono); font-size: 11px; color: var(--success); display: flex; flex-direction: column; gap: 2px;">
+                        <div style="color: var(--text-dim);">waiting for process configuration...</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Dynamic Context Drawer Pane (Sliding Details Drawer) -->
+        <aside class="context-pane" id="context-pane" aria-expanded="false">
+            <div class="context-control-row">
+                <button class="context-close-btn" onclick="closeContextPane()">[x] close</button>
+            </div>
+            <div id="context-content">
+                <!-- Injected dynamically -->
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- Footer Status Tray -->
+    <footer class="footer">
+        <div class="footer-left">
+            <div class="footer-dot green" id="footer-dot-connection"></div>
+            <span id="footer-connection">Modrinth online</span>
+        </div>
+        <div id="footer-queue">0 queued · --</div>
+    </footer>
+
+    <!-- Theme Selector Modal Overlay -->
+    <div class="overlay" id="theme-selector-overlay" style="display: none; justify-content: center; align-items: center; z-index: 2500;">
+        <div class="progress-card" style="max-width: 500px; width: 100%; gap: 16px;">
+            <div class="progress-label" style="display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:14px;">
+                <span>minestaller // change theme</span>
+                <button class="btn" style="padding: 2px 8px; font-size: 11px;" onclick="closeThemeSelector()">[x]</button>
+            </div>
+            <div style="font-family: var(--font-sans); font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 4px;">
+                choose a visual theme for the minestaller user interface:
+            </div>
+            
+            <div id="theme-list-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-height: 350px; overflow-y: auto; padding-right: 4px;">
+                <!-- Dynamically populated theme cards -->
+            </div>
+            
+            <div style="display:flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px;">
+                <button class="btn" onclick="closeThemeSelector()">cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect Device Modal Overlay -->
+    <div class="overlay" id="connect-device-overlay" style="display: none; justify-content: center; align-items: center; z-index: 2600;">
+        <div class="progress-card" style="max-width: 600px; width: 100%; gap: 16px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="progress-label" style="display:flex; justify-content:space-between; align-items:center; font-family:var(--font-mono); font-size:14px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+                <span>minestaller // connect with device</span>
+                <button class="btn" style="padding: 2px 8px; font-size: 11px;" onclick="closeConnectDeviceModal()">[x]</button>
+            </div>
+            
+            <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); line-height: 1.6;">
+                Copy and run the connection command on your computer to automatically link the local Minestaller agent. No permanent installation required.
+            </div>
+
+            <!-- Platform Tabs -->
+            <div style="display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px;">
+                <button class="tab-btn active" role="tab" id="tab-connect-universal" onclick="switchConnectTab('universal')" style="padding: 6px 12px; font-size: 11px;">
+                    <i class="ti ti-activity"></i> Universal (Recommended)
+                </button>
+                <button class="tab-btn" role="tab" id="tab-connect-windows" onclick="switchConnectTab('windows')" style="padding: 6px 12px; font-size: 11px;">
+                    <i class="ti ti-brand-windows"></i> Windows
+                </button>
+                <button class="tab-btn" role="tab" id="tab-connect-unix" onclick="switchConnectTab('unix')" style="padding: 6px 12px; font-size: 11px;">
+                    <i class="ti ti-brand-apple"></i> macOS / Linux
+                </button>
+            </div>
+
+            <!-- Command Box Container -->
+            <div style="position: relative; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px; padding: 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 4px;">
+                <code id="connect-command-text" style="color: var(--accent); font-family: var(--font-mono); font-size: 11px; word-break: break-all; white-space: pre-wrap; flex: 1; text-align: left; max-height: 80px; overflow-y: auto;">curl -sSL https://minestaller.com/connect.bat -o connect.bat && sh connect.bat || connect.bat</code>
+                
+                <div style="display: flex; gap: 6px; flex-shrink: 0; align-items: center;">
+                    <!-- Copy Button -->
+                    <button class="btn btn-primary" onclick="copyConnectCommand()" id="btn-copy-connect" style="padding: 6px 10px; display: flex; align-items: center; gap: 4px; font-size: 11px; border-radius: 4px;" title="Copy to clipboard">
+                        <i class="ti ti-copy" id="ic-copy-connect"></i> <span>copy</span>
+                    </button>
+                    <!-- Info Button with hover tooltip -->
+                    <div class="tooltip-container">
+                        <button class="btn btn-secondary" style="padding: 6px 8px; display: flex; align-items: center; font-size: 11px; border-radius: 4px; cursor: help;" id="btn-info-connect">
+                            <i class="ti ti-info-circle" style="font-size: 13px;"></i>
+                        </button>
+                        <div class="tooltip-text" id="connect-tooltip" style="visibility: hidden; width: 220px; background-color: var(--bg-card); color: var(--text-primary); text-align: left; border: 1px solid var(--border); border-radius: 6px; padding: 10px; position: absolute; z-index: 2700; bottom: 125%; right: 0; opacity: 0; transition: opacity 0.2s; font-family: var(--font-sans); font-size: 11px; line-height: 1.4; box-shadow: 0 4px 12px rgba(0,0,0,0.5);">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps Details -->
+            <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 12px; background: var(--bg-card); border: 1px solid var(--border-sub); border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
+                <div style="font-weight: bold; color: var(--text-primary); margin-bottom: 2px;">Steps to connect:</div>
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: bold; background: var(--bg-base); padding: 1px 5px; border-radius: 3px;">1</span>
+                    <span>Click the <strong>copy</strong> button to copy the command sequence above.</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: bold; background: var(--bg-base); padding: 1px 5px; border-radius: 3px;">2</span>
+                    <span id="connect-step-two">Open your command-line interface (e.g. Command Prompt, PowerShell, or macOS Terminal).</span>
+                </div>
+                <div style="display: flex; gap: 8px; align-items: flex-start;">
+                    <span style="font-family: var(--font-mono); font-size: 11px; color: var(--accent); font-weight: bold; background: var(--bg-base); padding: 1px 5px; border-radius: 3px;">3</span>
+                    <span>Paste the command and hit <strong>Enter</strong> to launch the connection. This tab will sync automatically!</span>
+                </div>
+            </div>
+
+            <!-- Scanning status -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 12px; font-family: var(--font-mono); font-size: 11px;">
+                <div style="display: flex; align-items: center; gap: 6px; color: var(--text-dim);">
+                    <span style="color: var(--success); animation: pulse 1s infinite;" id="scan-dot">●</span>
+                    <span id="scan-text">listening for connection...</span>
+                </div>
+                <button class="btn" onclick="closeConnectDeviceModal()">close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Startup Welcome Screen Overlay -->
+    <div class="overlay" id="startup-welcome-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 3000;">
+        <div class="progress-card" style="max-width: 460px; width: 100%; text-align: center; gap: 20px; padding: 24px;">
+            <div style="font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: var(--accent);">
+                minestaller // welcome
+            </div>
+            <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
+                To manage your Minecraft installations, Minestaller requires a helper agent running locally on your computer. Please choose an option to proceed:
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionContinueStartup()">
+                    Continue
+                </button>
+                <button class="action-btn btn-secondary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionInstallRequiredAgent()">
+                    Connect With Device
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Blocker Overlay -->
+    <div class="overlay" id="agent-setup-overlay" style="display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 2000;">
+        <div class="progress-card" style="max-width: 440px; width: 100%; text-align: center; gap: 16px;">
+            <div style="font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: var(--warning);">
+                minestaller // agent_offline
+            </div>
+            <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 16px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
+                To use the dashboard, Minestaller requires a connection helper agent running locally on your computer.<br><br>
+                Please connect your device to proceed.
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="openConnectDeviceModal()">
+                    <i class="ti ti-device-laptop" style="margin-right: 6px;"></i> Connect With Device
+                </button>
+            </div>
+            <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;">
+                <span style="color: var(--warning); animation: pulse 1s infinite;">●</span> waiting for connection...
+            </div>
+        </div>
+    </div>
+
+    <!-- Instance Setup Blocker Overlay -->
+    <div class="overlay" id="instance-setup-overlay" style="display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1900;">
+        <div class="progress-card" style="max-width: 500px; width: 100%; gap: 16px;">
+            <div style="font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: var(--accent); text-align: center;">
+                minestaller // instance_setup
+            </div>
+            <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 12px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
+                the helper agent is online, but we need to link it to your Minecraft installation.<br><br>
+                Please select or enter the directory path of your active Minecraft folder.
+            </div>
+            
+            <div class="card" style="background: var(--bg-base); padding: 12px; border: 1px solid var(--border);">
+                <div class="form-row">
+                    <div class="form-label">minecraft folder path</div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" class="text-input" id="setup-dir-input" placeholder="C:\Users\username\AppData\Roaming\.minecraft">
+                        <button class="btn" style="flex-shrink:0;" onclick="openSetupDirBrowser()">browse...</button>
+                    </div>
+                </div>
+                <div class="form-row" style="margin-top: 10px;">
+                    <div class="form-label">or select from auto-detected directories</div>
+                    <select class="select-input" id="setup-detected-select" onchange="selectSetupDetectedInstance(this)">
+                        <option value="">-- select detected instance --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content: center;">
+                <button class="btn btn-primary" style="width: 100%; font-weight: bold;" onclick="saveSetupSettings()">link minecraft instance</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Directory Browser Modal -->
+    <div class="overlay" id="dir-browser-overlay" style="display: none; justify-content: center; align-items: center;">
+        <div class="progress-card" style="max-width: 600px; width: 100%; gap: 12px;">
+            <div class="progress-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>browse directories</span>
+                <button class="btn" style="padding: 2px 8px;" onclick="closeDirBrowser()">[x]</button>
+            </div>
+            <div class="form-row">
+                <div class="form-label">active folder path</div>
+                <div style="display:flex; gap:8px;">
+                    <input type="text" class="text-input" id="dir-browser-path-input" readonly>
+                    <button class="btn" onclick="navigateBrowserUp()">up</button>
+                </div>
+            </div>
+            
+            <div id="dir-browser-drives-row" style="display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;"></div>
+
+            <div class="form-label" style="margin-top: 8px;">subdirectories</div>
+            <div id="dir-browser-list" style="height: 200px; border: 1px solid var(--border); background: var(--bg-base); overflow-y: auto; padding: 6px; display:flex; flex-direction:column; gap:2px;">
+                <!-- Dynamically populated -->
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                <button class="btn" onclick="closeDirBrowser()">cancel</button>
+                <button class="btn btn-primary" onclick="confirmDirBrowserSelection()">select this folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Progress Overlay -->
+    <div class="overlay" id="overlay">
+        <div class="progress-card">
+            <div class="progress-label" id="progress-phase-label">step: executing diagnostics</div>
+            <div class="progress-track">
+                <div class="progress-fill" id="progress-fill-bar"></div>
+                <div class="progress-text" id="progress-text-pct">0%</div>
+            </div>
+            <div class="progress-console" id="progress-console-logs"></div>
+            <div style="display:flex; justify-content:space-between;">
+                <button class="btn btn-warning" id="btn-cancel-install" onclick="cancelInstall()">cancel</button>
+                <button class="btn btn-primary" id="btn-close-progress" disabled onclick="closeProgressOverlay()">finish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI Logic Scripts (Vanilla JS) -->
+    <script>
+        // ==========================================
+        // Module 1: Application State & Setup
+        // ==========================================
+        const API_BASE = window.location.origin.includes('localhost:5000') ? '' : 'http://localhost:5000';
+        const originalFetch = window.fetch;
+        window.fetch = function(input, init) {
+            if (typeof input === 'string' && input.startsWith('/api/')) {
+                input = API_BASE + input;
+            }
+            return originalFetch(input, init);
+        };
+
+        async function downloadAgentZip() {
+            try {
+                let host = window.location.origin;
+                const isLocal = window.location.hostname === 'localhost' || 
+                                window.location.hostname === '127.0.0.1' || 
+                                window.location.hostname === '[::1]' || 
+                                window.location.protocol === 'file:';
+
+                if (isLocal) {
+                    alert("Since you are running Minestaller locally, you already have the agent files on your PC! Just open your 'minestaller' folder and run node server.js (or double-click start.bat).");
+                    return;
+                }
+
+                const serverJsRes = await originalFetch(host + '/server.js');
+                const packageJsonRes = await originalFetch(host + '/package.json');
+                
+                if (!serverJsRes.ok || !packageJsonRes.ok) {
+                    throw new Error("Unable to fetch agent files from origin server.");
+                }
+                
+                const serverJs = await serverJsRes.text();
+                const packageJson = await packageJsonRes.text();
+                const startBat = `@echo off\r\necho Installing dependencies...\r\ncall npm install\r\necho Starting agent...\r\nnode server.js\r\npause\r\n`;
+
+                function crc32(str) {
+                    let table = [];
+                    for (let i = 0; i < 256; i++) {
+                        let c = i;
+                        for (let j = 0; j < 8; j++) {
+                            c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+                        }
+                        table[i] = c;
+                    }
+                    let crc = 0 ^ (-1);
+                    for (let i = 0; i < str.length; i++) {
+                        crc = (crc >>> 8) ^ table[(crc ^ str.charCodeAt(i)) & 0xFF];
+                    }
+                    return (crc ^ (-1)) >>> 0;
+                }
+
+                function makeZip(files) {
+                    let LDATA = [];
+                    let CDATA = [];
+                    let offset = 0;
+                    
+                    for (let [filename, content] of Object.entries(files)) {
+                        let filenameBuf = new TextEncoder().encode(filename);
+                        let contentBuf = new TextEncoder().encode(content);
+                        let crc = crc32(content);
+                        let size = contentBuf.length;
+                        
+                        // Local file header
+                        let lHeader = new Uint8Array(30 + filenameBuf.length);
+                        lHeader.set([0x50, 0x4B, 0x03, 0x04]);
+                        lHeader.set([10, 0], 4);
+                        lHeader.set([0, 0], 6);
+                        lHeader.set([0, 0], 8);
+                        lHeader.set([0, 0, 0, 0], 10);
+                        lHeader.set([crc & 0xFF, (crc >> 8) & 0xFF, (crc >> 16) & 0xFF, (crc >> 24) & 0xFF], 14);
+                        lHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 18);
+                        lHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 22);
+                        lHeader.set([filenameBuf.length & 0xFF, (filenameBuf.length >> 8) & 0xFF], 26);
+                        lHeader.set([0, 0], 28);
+                        lHeader.set(filenameBuf, 30);
+                        
+                        LDATA.push(lHeader, contentBuf);
+                        
+                        // Central directory header
+                        let cHeader = new Uint8Array(46 + filenameBuf.length);
+                        cHeader.set([0x50, 0x4B, 0x01, 0x02]);
+                        cHeader.set([20, 0], 4);
+                        cHeader.set([10, 0], 6);
+                        cHeader.set([0, 0], 8);
+                        cHeader.set([0, 0], 10);
+                        cHeader.set([0, 0, 0, 0], 12);
+                        cHeader.set([crc & 0xFF, (crc >> 8) & 0xFF, (crc >> 16) & 0xFF, (crc >> 24) & 0xFF], 16);
+                        cHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 20);
+                        cHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 24);
+                        cHeader.set([filenameBuf.length & 0xFF, (filenameBuf.length >> 8) & 0xFF], 28);
+                        cHeader.set([0, 0], 30);
+                        cHeader.set([0, 0], 32);
+                        cHeader.set([0, 0], 34);
+                        cHeader.set([0, 0], 36);
+                        cHeader.set([0, 0, 0, 0], 38);
+                        cHeader.set([offset & 0xFF, (offset >> 8) & 0xFF, (offset >> 16) & 0xFF, (offset >> 24) & 0xFF], 42);
+                        cHeader.set(filenameBuf, 46);
+                        
+                        CDATA.push(cHeader);
+                        offset += lHeader.length + contentBuf.length;
+                    }
+                    
+                    let cDataLen = CDATA.reduce((a, b) => a + b.length, 0);
+                    let eocd = new Uint8Array(22);
+                    eocd.set([0x50, 0x4B, 0x05, 0x06]);
+                    eocd.set([0, 0], 4);
+                    eocd.set([0, 0], 6);
+                    eocd.set([Object.keys(files).length & 0xFF, (Object.keys(files).length >> 8) & 0xFF], 8);
+                    eocd.set([Object.keys(files).length & 0xFF, (Object.keys(files).length >> 8) & 0xFF], 10);
+                    eocd.set([cDataLen & 0xFF, (cDataLen >> 8) & 0xFF, (cDataLen >> 16) & 0xFF, (cDataLen >> 24) & 0xFF], 12);
+                    eocd.set([offset & 0xFF, (offset >> 8) & 0xFF, (offset >> 16) & 0xFF, (offset >> 24) & 0xFF], 16);
+                    eocd.set([0, 0], 20);
+                    
+                    let parts = [...LDATA, ...CDATA, eocd];
+                    return new Blob(parts, { type: 'application/zip' });
+                }
+
+                const zipBlob = makeZip({
+                    'server.js': serverJs,
+                    'package.json': packageJson,
+                    'start.bat': startBat
+                });
+                
+                const url = URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'minestaller-agent.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                alert("Failed to download agent helper: " + e.message);
+            }
+        }
+
+        let config = { lastMinecraftDir: "", instances: {} };
+        let currentInstancePath = "";
+        let worlds = [];
+        let cart = [];
+        let activeWorld = null;
+        let selectedProject = null;
+        let installPollInterval = null;
+        let agentPollInterval = null;
+        
+        let activeWorldDirName = null;
+        let searchResults = [];
+        let browserCurrentPath = '';
+
+        // Search pagination state variables
+        let currentSearchPage = 1;
+        let totalSearchHits = 0;
+        const searchLimit = 20;
+
+        function openContextPane() {
+            const pane = document.getElementById('context-pane');
+            pane.classList.add('open');
+            pane.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeContextPane() {
+            const pane = document.getElementById('context-pane');
+            pane.classList.remove('open');
+            pane.setAttribute('aria-expanded', 'false');
+        }
+
+        function toggleCartMode() {
+            const check = document.getElementById('cart-mode-check');
+            const isCartMode = check ? check.checked : false;
+            if (isCartMode) {
+                openCartPane();
+            } else {
+                closeContextPane();
+            }
+            renderSearchResults();
+        }
+
+        function openCartPane() {
+            const check = document.getElementById('cart-mode-check');
+            if (check) check.checked = true;
+
+            const content = document.getElementById('context-content');
+            if (cart.length === 0) {
+                content.innerHTML = `
+                    <div class="context-header">
+                        <div class="context-title">cart queue</div>
+                    </div>
+                    <div style="color:var(--text-secondary); padding-top:20px; text-align:center; font-family:var(--font-mono); font-size:11px;">
+                        cart is empty. search and add items.
+                    </div>
+                `;
+                openContextPane();
+                return;
+            }
+
+            const groups = {
+                modpack: [],
+                mod: [],
+                resourcepack: [],
+                shader: [],
+                datapack: []
+            };
+
+            cart.forEach(item => {
+                const type = item.project_type || 'mod';
+                if (groups[type]) {
+                    groups[type].push(item);
+                } else {
+                    groups.mod.push(item);
+                }
+            });
+
+            const colors = {
+                modpack: '#3b82f6',
+                mod: '#ef4444',
+                resourcepack: '#8b5cf6',
+                shader: '#f59e0b',
+                datapack: '#10b981'
+            };
+
+            const labels = {
+                modpack: 'Modpacks',
+                mod: 'Mods',
+                resourcepack: 'Resource Packs',
+                shader: 'Shaders',
+                datapack: 'Datapacks'
+            };
+
+            const categoriesToDisplay = [];
+            if (groups.modpack.length > 0) {
+                categoriesToDisplay.push({
+                    type: 'modpack',
+                    label: labels.modpack,
+                    color: colors.modpack,
+                    items: groups.modpack
+                });
+            }
+
+            const others = [
+                { type: 'mod', label: labels.mod, color: colors.mod, items: groups.mod },
+                { type: 'resourcepack', label: labels.resourcepack, color: colors.resourcepack, items: groups.resourcepack },
+                { type: 'shader', label: labels.shader, color: colors.shader, items: groups.shader },
+                { type: 'datapack', label: labels.datapack, color: colors.datapack, items: groups.datapack }
+            ];
+
+            const activeOthers = others.filter(cat => cat.items.length > 0);
+            activeOthers.sort((a, b) => b.items.length - a.items.length);
+
+            const finalCategories = [...categoriesToDisplay, ...activeOthers];
+
+            const listHtml = finalCategories.map(cat => `
+                <div style="margin-top: 14px; display:flex; flex-direction:column; gap:6px;">
+                    <div style="font-family: var(--font-sans); font-size: 14px; font-weight: bold; text-transform: uppercase; color: ${cat.color}; border-left: 2px solid ${cat.color}; padding-left: 6px; margin-bottom: 2px;">
+                        ${cat.label} - ${cat.items.length}
+                    </div>
+                    <div style="display:flex; flex-direction:column; gap:4px;">
+                        ${cat.items.map(item => `
+                            <div class="cart-row" style="border-left: 3.5px solid ${cat.color}; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; background: var(--bg-base); border-radius: 4px;">
+                                <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; margin-right: 8px;">
+                                    <div style="width: 22px; height: 22px; border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; background: var(--bg-panel); flex-shrink: 0; overflow: hidden;">
+                                        ${item.icon_url ? `<img src="${item.icon_url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none; font-weight:bold; font-size:9px; color:${cat.color}; font-family:var(--font-mono);">${item.title[0]}</span>` : `<span style="font-weight:bold; font-size:9px; color:${cat.color}; font-family:var(--font-mono);">${item.title[0]}</span>`}
+                                    </div>
+                                    <span style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="${item.title}">${item.title}</span>
+                                </div>
+                                <span class="cart-row-remove" style="color: var(--warning); font-size:10px; font-weight:bold; cursor:pointer;" onclick="removeCartItem('${item.project_id}')">remove</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            content.innerHTML = `
+                <div class="context-header">
+                    <div class="context-title">cart queue: ${cart.length}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+                    <div style="max-height: 400px; overflow-y: auto; display:flex; flex-direction:column; gap:4px; padding-right:4px;">
+                        ${listHtml}
+                    </div>
+                    <div style="margin-top:12px; border-top: 1px solid var(--border); padding-top:12px;">
+                        <button class="btn btn-primary" style="width:100%;" onclick="checkoutCart()">install cart items</button>
+                    </div>
+                </div>
+            `;
+            openContextPane();
+        }
+
+        function renderCartPane() {
+            openCartPane();
+        }
+
+        function updateQueueFooter() {
+            const path = config.lastMinecraftDir || '--';
+            document.getElementById('footer-queue').textContent = `${cart.length} queued · ${truncatePath(path)}`;
+            const countEl = document.getElementById('header-cart-count');
+            if (countEl) {
+                countEl.textContent = cart.length;
+            }
+            try {
+                localStorage.setItem('minestaller-cart', JSON.stringify(cart));
+            } catch (e) {
+                console.error("Failed to save cart to localStorage", e);
+            }
+            renderSearchResults();
+        }
+
+        function toggleHardcoreCheckbox(checkbox) {
+            const diffSelect = document.getElementById('world-diff-select');
+            if (checkbox.checked) {
+                diffSelect.value = "3";
+                diffSelect.disabled = true;
+            } else {
+                diffSelect.disabled = false;
+            }
+        }
+
+        function getGameModeName(gameType) {
+            switch (Number(gameType)) {
+                case 0: return 'survival';
+                case 1: return 'creative';
+                case 2: return 'adventure';
+                case 3: return 'spectator';
+                default: return 'survival';
+            }
+        }
+
+        function mainFrameSetActiveWorld(worldDirName) {
+            activeWorldDirName = worldDirName;
+        }
+
+        function mainFrameClearActiveWorld() {
+            activeWorldDirName = null;
+        }
+
+        async function resolveTargetWorldForDatapacks() {
+            if (activeWorldDirName) {
+                return activeWorldDirName;
+            }
+            if (worlds.length === 0) {
+                alert("Please go to the Worlds Manager and select a world first.");
+                switchTab('worlds');
+                return null;
+            }
+            const worldNames = worlds.map(w => w.directoryName);
+            const chosen = prompt(`Enter the folder name of the target world for datapacks:\nAvailable: ${worldNames.join(', ')}`);
+            if (chosen && worldNames.includes(chosen)) {
+                return chosen;
+            } else {
+                alert("Invalid world folder name.");
+                return null;
+            }
+        }
+
+        async function resolveModrinthDownloadTask(project, targetWorld) {
+            const mcVersion = document.getElementById('status-version').textContent;
+            let loader = document.getElementById('status-loader').textContent.trim().toLowerCase();
+            if (loader === 'vanilla' || !loader) loader = 'any';
+
+            const url = `https://api.modrinth.com/v2/project/${project.project_id}/version`;
+            const res = await fetch(url, { headers: { 'User-Agent': 'Minestaller/1.0.0' } });
+            if (!res.ok) {
+                throw new Error(`Failed to fetch versions for ${project.title}`);
+            }
+            const versions = await res.json();
+            
+            let compatibleVersion = null;
+            const sortedVersions = versions.sort((a, b) => {
+                if (a.version_type === 'release' && b.version_type !== 'release') return -1;
+                if (a.version_type !== 'release' && b.version_type === 'release') return 1;
+                return new Date(b.date_published) - new Date(a.date_published);
+            });
+
+            for (const ver of sortedVersions) {
+                const gameVerMatch = ver.game_versions.includes(mcVersion);
+                let loaderMatch = true;
+                
+                if (project.project_type === 'mod' && loader !== 'any') {
+                    loaderMatch = ver.loaders.map(l => l.toLowerCase()).includes(loader);
+                }
+                
+                if (gameVerMatch && loaderMatch) {
+                    compatibleVersion = ver;
+                    break;
+                }
+            }
+            
+            if (!compatibleVersion && project.project_type === 'mod') {
+                for (const ver of sortedVersions) {
+                    const gameVerMatch = ver.game_versions.includes(mcVersion);
+                    if (gameVerMatch) {
+                        compatibleVersion = ver;
+                        break;
+                    }
+                }
+            }
+
+            if (!compatibleVersion) {
+                return null;
+            }
+
+            let fileToDownload = compatibleVersion.files.find(f => f.primary) || compatibleVersion.files[0];
+            if (!fileToDownload) {
+                return null;
+            }
+
+            if (project.project_type === 'modpack') {
+                const resolveUrl = `${API_BASE}/api/resolve-modpack?url=${encodeURIComponent(fileToDownload.url)}&projectId=${project.project_id}`;
+                const resolveRes = await fetch(resolveUrl);
+                if (!resolveRes.ok) {
+                    const err = await resolveRes.json();
+                    throw new Error(err.error || "Failed to resolve modpack files");
+                }
+                const indexData = await resolveRes.json();
+                
+                const tasks = [];
+                if (indexData.files && indexData.files.length > 0) {
+                    for (const f of indexData.files) {
+                        const parts = f.path.split('/');
+                        const filename = parts.pop();
+                        const targetFolder = parts.join('/');
+                        
+                        tasks.push({
+                            projectId: project.project_id,
+                            title: f.path,
+                            filename: filename,
+                            downloadUrl: f.downloads[0],
+                            targetFolder: targetFolder
+                        });
+                    }
+                }
+                
+                tasks.push({
+                    projectId: project.project_id,
+                    title: project.title,
+                    filename: `minestaller_temp_${project.project_id}.mrpack`,
+                    downloadUrl: fileToDownload.url,
+                    targetFolder: ''
+                });
+
+                return tasks;
+            } else {
+                let targetFolder = 'mods';
+                if (project.project_type === 'resourcepack') {
+                    targetFolder = 'resourcepacks';
+                } else if (project.project_type === 'shader') {
+                    targetFolder = 'shaderpacks';
+                } else if (project.project_type === 'datapack') {
+                    targetFolder = `saves/${targetWorld}/datapacks`;
+                }
+
+                return [{
+                    projectId: project.project_id,
+                    title: project.title,
+                    filename: fileToDownload.filename,
+                    downloadUrl: fileToDownload.url,
+                    targetFolder: targetFolder
+                }];
+            }
+        }
+
+        // Path truncation helper (show only last folder name)
+        function truncatePath(fullPath) {
+            if (!fullPath) return '--';
+            const normalized = fullPath.replace(/\\/g, '/');
+            const parts = normalized.split('/');
+            const lastDir = parts.pop() || parts.pop() || '';
+            return `...\\${lastDir}`;
+        }
+
+        // ==========================================
+        // Module 2: Lifecycle Handlers & Scan Init
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Close context pane when user hovers away from it
+            const pane = document.getElementById('context-pane');
+            if (pane) {
+                pane.addEventListener('mouseleave', () => {
+                    closeContextPane();
+                });
+            }
+            // Restore cart from localStorage
+            try {
+                const savedCart = localStorage.getItem('minestaller-cart');
+                if (savedCart) {
+                    cart = JSON.parse(savedCart);
+                }
+            } catch (e) {
+                console.error("Failed to restore cart from localStorage", e);
+            }
+            updateQueueFooter();
+            loadCompanionIPs();
+        });
+
+        function actionInstallRequiredAgent() {
+            document.getElementById('startup-welcome-screen').style.display = 'none';
+            document.getElementById('agent-setup-overlay').style.display = 'flex';
+            openConnectDeviceModal();
+            if (!agentPollInterval) {
+                agentPollInterval = setInterval(fetchInstanceData, 2000);
+            }
+        }
+
+        async function actionContinueStartup() {
+            document.getElementById('startup-welcome-screen').style.display = 'none';
+            await fetchInstanceData();
+            if (!agentPollInterval) {
+                agentPollInterval = setInterval(fetchInstanceData, 2000);
+            }
+        }
+
+        // Config Load
+        async function loadConfig() {
+            try {
+                const res = await fetch('/api/config');
+                config = await res.json();
+                document.getElementById('settings-dir-input').value = config.lastMinecraftDir || '';
+                document.getElementById('setup-dir-input').value = config.lastMinecraftDir || '';
+            } catch (e) {
+                console.error("Failed to load config", e);
+            }
+        }
+
+        let hasLoadedDetected = false;
+        let activePathInputId = 'settings-dir-input';
+
+        // Fetch all instance details (Agent verify point)
+        async function fetchInstanceData() {
+            try {
+                const res = await fetch('/api/instance');
+                
+                // Hide connection setup blocker screen
+                document.getElementById('agent-setup-overlay').style.display = 'none';
+
+                if (res.status === 400) {
+                    // Agent is online, but no active instance configured! Show setup screen
+                    showInstanceSetupBlocker();
+                    
+                    if (!hasLoadedDetected) {
+                        await loadConfig();
+                        await loadDetectedInstances();
+                        hasLoadedDetected = true;
+                    }
+                    return;
+                }
+
+                if (!res.ok) {
+                    throw new Error("Local agent response error: " + res.status);
+                }
+
+                const data = await res.json();
+                currentInstancePath = data.instancePath;
+                
+                // Hide setup blocker
+                hideInstanceSetupBlocker();
+
+                if (!hasLoadedDetected) {
+                    await loadConfig();
+                    await loadDetectedInstances();
+                    hasLoadedDetected = true;
+                }
+
+                // Populate UI components dynamically
+                bindInstanceData(data);
+                
+            } catch (e) {
+                // Show setup blocker overlay
+                document.getElementById('agent-setup-overlay').style.display = 'flex';
+                hideInstanceSetupBlocker();
+                hasLoadedDetected = false;
+                console.error("Agent offline:", e.message);
+            }
+        }
+
+        function showInstanceSetupBlocker() {
+            document.getElementById('instance-setup-overlay').style.display = 'flex';
+        }
+
+        function hideInstanceSetupBlocker() {
+            document.getElementById('instance-setup-overlay').style.display = 'none';
+        }
+
+        async function openSetupDirBrowser() {
+            activePathInputId = 'setup-dir-input';
+            const currentVal = document.getElementById('setup-dir-input').value.trim();
+            document.getElementById('dir-browser-overlay').style.display = 'flex';
+            await loadDirBrowserPath(currentVal);
+        }
+
+        function selectSetupDetectedInstance(select) {
+            if (select.value) {
+                document.getElementById('setup-dir-input').value = select.value;
+            }
+        }
+
+        async function saveSetupSettings() {
+            const dir = document.getElementById('setup-dir-input').value.trim();
+            if (!dir) {
+                alert("Please select a directory path.");
+                return;
+            }
+
+            config.lastMinecraftDir = dir;
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                if (res.ok) {
+                    document.getElementById('instance-setup-overlay').style.display = 'none';
+                    await fetchInstanceData();
+                }
+            } catch (e) {
+                alert("Failed to save configurations: " + e.message);
+            }
+        }
+
+        // Bind data values from API response to DOM elements
+        function bindInstanceData(data) {
+            // Status console line
+            document.getElementById('status-dir').innerHTML = `...\\<span style="color:var(--accent); font-weight:bold;">${data.instanceName}</span>`;
+            document.getElementById('status-version').textContent = data.mcVersion;
+            document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">${data.loader}</span>`;
+            document.getElementById('status-state').innerHTML = `<span style="color:var(--success);">● ready</span>`;
+
+            // Pinned sidebar label
+            document.getElementById('sidebar-active-instance').textContent = data.instanceName;
+
+            // Stat Cards Row values
+            document.getElementById('stat-version').textContent = data.mcVersion;
+            document.getElementById('stat-mods').textContent = data.mods.total;
+            
+            const activeRps = data.resourcepacks.filter(r => r.active).length;
+            document.getElementById('stat-resourcepacks').textContent = data.resourcepacks.length;
+            document.getElementById('stat-resourcepacks-active').textContent = `${activeRps} active`;
+            
+            const activeShaders = data.shaders.filter(s => s.active).length;
+            document.getElementById('stat-shaders').textContent = data.shaders.length;
+            document.getElementById('stat-shaders-active').textContent = `${activeShaders} active`;
+
+            // Resourcepacks card rows
+            const rpList = document.getElementById('dash-resourcepacks-list');
+            if (data.resourcepacks.length === 0) {
+                rpList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-family:var(--font-mono); font-size:11px;">no resourcepacks installed.</div>';
+            } else {
+                rpList.innerHTML = data.resourcepacks.map(rp => {
+                    const escapedName = rp.name.replace(/'/g, "\\'");
+                    return `
+                        <div class="list-row">
+                            <div class="list-row-info">
+                                <div class="dot ${rp.active ? 'active' : 'inactive'}"></div>
+                                <span class="list-row-name" title="${rp.name}">${rp.name}</span>
+                            </div>
+                            <span class="pill-tag ${rp.active ? 'active-green' : 'inactive-purple'}" onclick="toggleResourcepack('${escapedName}', ${!rp.active})">
+                                ${rp.active ? 'active' : 'inactive'}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Shaders card header actions dynamic update
+            const shActions = document.getElementById('dash-shaders-actions');
+            if (shActions) {
+                if (data.shadersEnabled) {
+                    shActions.innerHTML = `
+                        <span style="color:var(--success); font-weight:bold; font-size:9px; margin-right:4px;">● ON</span>
+                        <a href="#" onclick="event.preventDefault(); toggleShadersSystem(false)" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--warning)'" onmouseout="this.style.color='var(--text-secondary)'">disable</a>
+                        <span style="color:var(--border-sub); width:1px; height:8px; background:var(--border-sub);"></span>
+                        <a href="#" onclick="event.preventDefault(); toggleAllShaders(false)" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--warning)'" onmouseout="this.style.color='var(--text-secondary)'">deactivate all</a>
+                    `;
+                } else {
+                    shActions.innerHTML = `
+                        <span style="color:var(--text-dim); font-weight:bold; font-size:9px; margin-right:4px;">● OFF</span>
+                        <a href="#" onclick="event.preventDefault(); toggleShadersSystem(true)" style="color:var(--accent); text-decoration:none; transition:opacity 0.2s;" onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">enable</a>
+                        <span style="color:var(--border-sub); width:1px; height:8px; background:var(--border-sub);"></span>
+                        <a href="#" onclick="event.preventDefault(); toggleAllShaders(false)" style="color:var(--text-secondary); text-decoration:none; transition:color 0.2s;" onmouseover="this.style.color='var(--warning)'" onmouseout="this.style.color='var(--text-secondary)'">deactivate all</a>
+                    `;
+                }
+            }
+
+            // Shaders card rows
+            const shList = document.getElementById('dash-shaders-list');
+            if (data.shaders.length === 0) {
+                shList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-family:var(--font-mono); font-size:11px;">no shaders installed.</div>';
+            } else {
+                shList.innerHTML = data.shaders.map(sh => {
+                    const escapedName = sh.name.replace(/'/g, "\\'");
+                    return `
+                        <div class="list-row">
+                            <div class="list-row-info">
+                                <div class="dot ${sh.active ? 'amber' : 'inactive'}"></div>
+                                <span class="list-row-name" title="${sh.name}">${sh.name}</span>
+                            </div>
+                            <span class="pill-tag ${sh.active ? 'active-amber' : 'inactive-purple'}" onclick="toggleShader('${escapedName}', ${!sh.active})">
+                                ${sh.active ? 'active' : 'inactive'}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Modpack detected state card
+            const mpContainer = document.getElementById('dash-modpack-container');
+            if (data.modpack && data.modpack.detected) {
+                mpContainer.innerHTML = `
+                    <div class="modpack-card">
+                        <div class="modpack-icon">
+                            ${data.modpack.iconUrl ? `<img src="${data.modpack.iconUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none;">⚗️</span>` : '⚗️'}
+                        </div>
+                        <div class="modpack-info">
+                            <div class="modpack-title" title="${data.modpack.name}">${data.modpack.name}</div>
+                            <div class="modpack-meta">${data.modpack.source} · ${data.modpack.version} · ${data.loader} ${data.mcVersion}</div>
+                            <span class="badge accent-badge">modpack detected</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                mpContainer.innerHTML = `
+                    <div class="modpack-card not-detected">
+                        <div class="modpack-icon" style="color: var(--text-dim);">⚗️</div>
+                        <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim);">no modpack linked</span>
+                    </div>
+                `;
+            }
+
+            // Profile card details
+            document.getElementById('profile-java').textContent = data.allocatedRam ? data.javaVersion : '--';
+            document.getElementById('profile-ram').textContent = data.allocatedRam;
+            document.getElementById('profile-worlds').textContent = data.worlds.total;
+            
+            const sizeGB = (data.instanceSizeMB / 1024).toFixed(1);
+            document.getElementById('profile-size').textContent = `${sizeGB} GB`;
+
+            // Footer state details
+            const footDot = document.getElementById('footer-dot-connection');
+            const footConn = document.getElementById('footer-connection');
+            if (data.modrinthOnline) {
+                footDot.className = 'footer-dot green';
+                footConn.textContent = 'Modrinth online';
+            } else {
+                footDot.className = 'footer-dot red';
+                footConn.textContent = 'Modrinth offline';
+            }
+
+            document.getElementById('footer-queue').textContent = `${cart.length} queued · ${truncatePath(data.instancePath)}`;
+        }
+
+        // ==========================================
+        // Module 3: Router Tab Controller
+        // ==========================================
+        function switchTab(tabId) {
+            const tabs = ['dash', 'mods', 'worlds', 'settings', 'porter'];
+            tabs.forEach(t => {
+                document.getElementById(`btn-${t}`).classList.remove('active');
+                document.getElementById(`panel-${t}`).classList.remove('active');
+            });
+
+            document.getElementById(`btn-${tabId}`).classList.add('active');
+            document.getElementById(`panel-${tabId}`).classList.add('active');
+
+            if (tabId === 'worlds' && config.lastMinecraftDir) {
+                loadWorlds(config.lastMinecraftDir);
+            }
+            if (tabId === 'porter') {
+                loadPorterDetectedInstances();
+            }
+            if (tabId === 'settings') {
+                loadCompanionIPs();
+            }
+            closeContextPane();
+        }
+
+        // ==========================================
+        // Module 4: Addon Installer (Search Modrinth)
+        // ==========================================
+        function renderSearchResults() {
+            const container = document.getElementById('search-results-container');
+            if (!container || !searchResults || searchResults.length === 0) return;
+
+            const check = document.getElementById('cart-mode-check');
+            const isCartMode = check ? check.checked : false;
+
+            container.innerHTML = searchResults.map(hit => {
+                const inCart = isCartMode && cart.some(c => c.project_id === hit.project_id);
+                const cardStyle = inCart ? 'border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.04);' : '';
+                const titleStyle = inCart ? 'color: #ef4444; font-weight: bold;' : '';
+                
+                return `
+                    <div class="search-row" style="${cardStyle}" onclick="selectProject('${hit.project_id}')">
+                        <div style="display:flex; gap:12px; align-items:center;">
+                            <div class="search-row-icon-wrapper" style="${inCart ? 'border-color: #ef4444;' : ''}">
+                                ${hit.icon_url ? `<img src="${hit.icon_url}" class="search-row-icon-img" alt="" onerror="this.parentElement.innerHTML='<div class=search-row-icon-fallback>${hit.title[0]}</div>'">` : `<div class="search-row-icon-fallback">${hit.title[0]}</div>`}
+                            </div>
+                            <div class="search-row-info">
+                                <div class="search-row-title" style="${titleStyle}">${hit.title} ${inCart ? '<span style="font-size:9px; color:#ef4444; margin-left:6px; font-weight:bold; text-transform:uppercase;">[in cart]</span>' : ''}</div>
+                                <div class="search-row-sub">by ${hit.author} | downloads: ${hit.downloads.toLocaleString()}</div>
+                            </div>
+                        </div>
+                        <span class="search-row-type" style="${inCart ? 'border-color: #ef4444; color: #ef4444;' : ''}">${hit.project_type}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function performSearch(page = 1) {
+            currentSearchPage = page;
+            const query = document.getElementById('search-input').value.trim();
+            const type = document.getElementById('search-type-select').value;
+            const container = document.getElementById('search-results-container');
+
+            searchResults = [];
+            container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:20px;">querying modrinth API database...</div>';
+
+            const mcVersion = document.getElementById('status-version').textContent;
+            let facets = `[["project_type:${type}"]]`;
+            if (mcVersion && mcVersion !== '--' && mcVersion !== 'Unknown') {
+                facets = `[["project_type:${type}"],["versions:${mcVersion}"]]`;
+            }
+
+            const offset = (page - 1) * searchLimit;
+            const url = `https://api.modrinth.com/v2/search?query=${encodeURIComponent(query)}&facets=${encodeURIComponent(facets)}&limit=${searchLimit}&offset=${offset}`;
+
+            try {
+                const res = await fetch(url, { headers: { 'User-Agent': 'Minestaller/1.0.0' } });
+                const data = await res.json();
+                searchResults = data.hits || [];
+                if (type === 'datapack') {
+                    searchResults.forEach(hit => {
+                        hit.project_type = 'datapack';
+                    });
+                }
+                totalSearchHits = data.total_hits || 0;
+
+                if (searchResults.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:20px;">no results found.</div>';
+                    return;
+                }
+
+                renderSearchResults();
+                renderSearchPagination();
+            } catch (e) {
+                container.innerHTML = '<div style="color:red; text-align:center; padding:20px;">query failed: connection error.</div>';
+            }
+        }
+
+        function renderSearchPagination() {
+            const container = document.getElementById('search-results-container');
+            if (!container || searchResults.length === 0) return;
+
+            const totalPages = Math.ceil(totalSearchHits / searchLimit);
+            if (totalPages <= 1) return;
+
+            const paginationDiv = document.createElement('div');
+            paginationDiv.id = 'search-pagination-controls';
+            paginationDiv.className = 'pagination-row';
+
+            // Back button
+            const backBtn = document.createElement('button');
+            backBtn.className = 'page-btn';
+            backBtn.textContent = 'back';
+            backBtn.disabled = currentSearchPage === 1;
+            backBtn.onclick = () => performSearch(currentSearchPage - 1);
+            paginationDiv.appendChild(backBtn);
+
+            // Page numbers
+            let startPage = Math.max(1, currentSearchPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentSearchPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => performSearch(i);
+                paginationDiv.appendChild(pageBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'page-btn';
+            nextBtn.textContent = 'next';
+            nextBtn.disabled = currentSearchPage === totalPages;
+            nextBtn.onclick = () => performSearch(currentSearchPage + 1);
+            paginationDiv.appendChild(nextBtn);
+
+            container.appendChild(paginationDiv);
+        }
+
+        async function selectProject(projectId) {
+            const project = searchResults.find(p => p.project_id === projectId);
+            if (!project) return;
+
+            selectedProject = project;
+
+            const isCartMode = document.getElementById('cart-mode-check').checked;
+            const inCart = cart.some(c => c.project_id === projectId);
+
+            let actionBtnHtml = '';
+            if (isCartMode) {
+                actionBtnHtml = `<button class="btn btn-primary" onclick="toggleCartItem()">${inCart ? 'remove from cart' : 'add to cart'}</button>`;
+            } else {
+                actionBtnHtml = `<button class="btn btn-primary" onclick="initiateSingleInstall()">download & install</button>`;
+            }
+
+            const content = document.getElementById('context-content');
+            content.innerHTML = `
+                <div class="context-header">
+                    <div class="context-title">project details</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px;">
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <div style="width: 48px; height: 48px; border: 1px solid var(--border-grid); display:flex; align-items:center; justify-content:center; background:var(--bg-base); flex-shrink:0;">
+                            ${project.icon_url ? `<img src="${project.icon_url}" style="width:100%; height:100%; object-fit:cover;" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"><span style="display:none; font-weight:bold; color:var(--accent); font-size:18px;">${project.title[0]}</span>` : `<span style="font-weight:bold; color:var(--accent); font-size:18px;">${project.title[0]}</span>`}
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:2px;">
+                            <div style="font-weight:bold; font-size:14px; color:var(--accent);">${project.title}</div>
+                            <div style="font-size:11px; color:var(--text-secondary);">by ${project.author} | category: ${project.categories.join(', ')}</div>
+                        </div>
+                    </div>
+                    
+                    <p style="font-size:12px; color:var(--text-primary); margin-top:6px; line-height:1.4;">${project.description}</p>
+                    
+                    <div style="margin-top:12px;">
+                        ${actionBtnHtml}
+                    </div>
+                </div>
+            `;
+            openContextPane();
+        }
+
+        function toggleCartItem() {
+            if (!selectedProject) return;
+            const inCart = cart.some(c => c.project_id === selectedProject.project_id);
+            if (inCart) {
+                cart = cart.filter(c => c.project_id !== selectedProject.project_id);
+            } else {
+                if (selectedProject.project_type === 'modpack' && cart.some(c => c.project_type === 'modpack')) {
+                    alert("You can only install one modpack at a time.");
+                    return;
+                }
+                cart.push(selectedProject);
+            }
+            selectProject(selectedProject.project_id);
+            updateQueueFooter();
+        }
+
+        // ==========================================
+        // Module 5: Saves & NBT Worlds Controller
+        // ==========================================
+        async function loadWorlds(instancePath) {
+            try {
+                const res = await fetch(`/api/worlds?instancePath=${encodeURIComponent(instancePath)}`);
+                worlds = await res.json();
+                
+                const grid = document.getElementById('worlds-grid-container');
+                if (worlds.length === 0) {
+                    grid.innerHTML = '<div style="color:var(--text-secondary); padding:20px;">no saves worlds detected.</div>';
+                    return;
+                }
+
+                grid.innerHTML = worlds.map(w => `
+                    <div class="world-card ${activeWorld && activeWorld.directoryName === w.directoryName ? 'selected' : ''}" onclick="selectWorld('${w.directoryName}')">
+                        <div class="world-card-name">${w.levelName}</div>
+                        <div class="world-card-meta">folder: ${w.directoryName}</div>
+                        <div class="world-card-meta">mode: ${w.isCorrupted ? 'corrupted' : getGameModeName(w.gameType)}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to load worlds", e);
+            }
+        }
+
+        function selectWorld(dirName) {
+            const world = worlds.find(w => w.directoryName === dirName);
+            if (!world) return;
+
+            activeWorld = world;
+            
+            const cards = document.querySelectorAll('.world-card');
+            cards.forEach(c => c.classList.remove('selected'));
+            loadWorlds(config.lastMinecraftDir);
+
+            const content = document.getElementById('context-content');
+            content.innerHTML = `
+                <div class="context-header">
+                    <div class="context-title">world settings</div>
+                </div>
+                <div class="card" style="margin-top:12px;">
+                    <div class="card-header"><i class="ti ti-settings-2"></i> metadata configuration</div>
+                    <div class="form-row">
+                        <div class="form-label">world name</div>
+                        <input type="text" class="text-input" id="world-name-input" value="${world.levelName}">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">game mode</div>
+                        <select class="select-input" id="world-mode-select">
+                            <option value="0" ${world.gameType === 0 ? 'selected' : ''}>survival</option>
+                            <option value="1" ${world.gameType === 1 ? 'selected' : ''}>creative</option>
+                            <option value="2" ${world.gameType === 2 ? 'selected' : ''}>adventure</option>
+                            <option value="3" ${world.gameType === 3 ? 'selected' : ''}>spectator</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">difficulty</div>
+                        <select class="select-input" id="world-diff-select" ${world.hardcore ? 'disabled' : ''}>
+                            <option value="0" ${world.difficulty === 0 ? 'selected' : ''}>peaceful</option>
+                            <option value="1" ${world.difficulty === 1 ? 'selected' : ''}>easy</option>
+                            <option value="2" ${world.difficulty === 2 ? 'selected' : ''}>normal</option>
+                            <option value="3" ${world.difficulty === 3 ? 'selected' : ''}>hard</option>
+                        </select>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" class="check-input" id="world-cheats-check" ${world.allowCommands ? 'checked' : ''}>
+                        <span class="form-label" style="text-transform:lowercase;">allow cheats</span>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" class="check-input" id="world-hardcore-check" ${world.hardcore ? 'checked' : ''} onchange="toggleHardcoreCheckbox(this)">
+                        <span class="form-label" style="text-transform:lowercase;">hardcore mode</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="saveWorldSettings()">save settings</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px;">
+                    <div class="card-header"><i class="ti ti-download"></i> datapack installer</div>
+                    <div class="datapacks-container">
+                        <div class="form-label">installed datapacks</div>
+                        <div class="datapacks-list" id="world-datapacks-list">
+                            <div style="color:var(--text-secondary); text-align:center; padding-top:20px;">loading datapacks...</div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                            <input type="file" multiple id="local-datapack-file" style="display:none;" onchange="uploadLocalDatapacks(this)">
+                            <button class="btn" onclick="document.getElementById('local-datapack-file').click()">upload file(s)</button>
+                            <button class="btn btn-primary" onclick="routeToDatapackSearch()">find online</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            openContextPane();
+            loadWorldDatapacks(world.directoryName);
+        }
+
+        async function saveWorldSettings() {
+            if (!activeWorld) return;
+            const levelName = document.getElementById('world-name-input').value.trim();
+            const gameType = document.getElementById('world-mode-select').value;
+            const difficulty = document.getElementById('world-diff-select').value;
+            const allowCommands = document.getElementById('world-cheats-check').checked;
+            const hardcore = document.getElementById('world-hardcore-check').checked;
+
+            if (!levelName) {
+                alert("World name cannot be empty.");
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/worlds/settings', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instancePath: config.lastMinecraftDir,
+                        worldName: activeWorld.directoryName,
+                        levelName,
+                        gameType,
+                        difficulty,
+                        hardcore,
+                        allowCommands
+                    })
+                });
+                if (res.ok) {
+                    alert("World NBT settings saved successfully.");
+                    await loadWorlds(config.lastMinecraftDir);
+                    activeWorld.levelName = levelName;
+                    activeWorld.gameType = Number(gameType);
+                    activeWorld.difficulty = Number(difficulty);
+                    activeWorld.allowCommands = allowCommands;
+                    activeWorld.hardcore = hardcore;
+                } else {
+                    const err = await res.json();
+                    alert("Save failed: " + err.error);
+                }
+            } catch (e) {
+                alert("Network error: " + e.message);
+            }
+        }
+
+        async function loadWorldDatapacks(worldName) {
+            const container = document.getElementById('world-datapacks-list');
+            try {
+                const res = await fetch(`/api/worlds/datapacks?instancePath=${encodeURIComponent(config.lastMinecraftDir)}&worldName=${encodeURIComponent(worldName)}`);
+                const items = await res.json();
+                if (items.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding-top:20px;">no datapacks active.</div>';
+                    return;
+                }
+                container.innerHTML = items.map(item => `
+                    <div class="datapack-item">
+                        <span>${item.name}</span>
+                        <span class="datapack-action-del" onclick="deleteDatapack('${item.name}')">x</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = '<div style="color:red; text-align:center; padding-top:20px;">failed to load.</div>';
+            }
+        }
+
+        async function deleteDatapack(name) {
+            if (!activeWorld) return;
+            if (!confirm(`Permanently delete datapack "${name}"?`)) return;
+
+            try {
+                const res = await fetch('/api/worlds/datapacks/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instancePath: config.lastMinecraftDir,
+                        worldName: activeWorld.directoryName,
+                        datapackName: name
+                    })
+                });
+                if (res.ok) {
+                    loadWorldDatapacks(activeWorld.directoryName);
+                }
+            } catch (e) {
+                alert("Failed to delete: " + e.message);
+            }
+        }
+
+        async function uploadLocalDatapacks(input) {
+            if (!activeWorld || !input.files.length) return;
+            const files = Array.from(input.files);
+
+            for (const file of files) {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    await fetch(`/api/worlds/${activeWorld.directoryName}/datapacks/upload?instancePath=${encodeURIComponent(config.lastMinecraftDir)}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/octet-stream',
+                            'x-filename': file.name
+                        },
+                        body: arrayBuffer
+                    });
+                } catch (e) {
+                    alert(`Upload failed for ${file.name}: ${e.message}`);
+                }
+            }
+
+            input.value = '';
+            loadWorldDatapacks(activeWorld.directoryName);
+        }
+
+        // ==========================================
+        // Module 6: Directory Browser Modal Component
+        // ==========================================
+        async function openDirBrowser(inputId) {
+            activePathInputId = inputId || 'settings-dir-input';
+            const currentVal = document.getElementById(activePathInputId).value.trim();
+            document.getElementById('dir-browser-overlay').style.display = 'flex';
+            await loadDirBrowserPath(currentVal);
+        }
+
+        function closeDirBrowser() {
+            document.getElementById('dir-browser-overlay').style.display = 'none';
+        }
+
+        async function loadDirBrowserPath(path) {
+            try {
+                const res = await fetch(`/api/browse?path=${encodeURIComponent(path || '')}`);
+                if (!res.ok) {
+                    if (path) return loadDirBrowserPath('');
+                    return;
+                }
+                const data = await res.json();
+                browserCurrentPath = data.currentPath;
+                document.getElementById('dir-browser-path-input').value = data.currentPath;
+
+                const drivesContainer = document.getElementById('dir-browser-drives-row');
+                if (data.drives && data.drives.length > 0) {
+                    drivesContainer.innerHTML = '<span class="form-label" style="align-self:center;">drives:</span> ' + data.drives.map(d => `
+                        <button class="btn" style="padding: 2px 6px; font-size:11px;" onclick="loadDirBrowserPath('${d.replace(/\\/g, '\\\\')}')">${d}</button>
+                    `).join('');
+                } else {
+                    drivesContainer.innerHTML = '';
+                }
+
+                const listContainer = document.getElementById('dir-browser-list');
+                let html = '';
+                if (data.parentPath) {
+                    html += `
+                        <div class="datapack-item" style="cursor:pointer;" onclick="loadDirBrowserPath('${data.parentPath.replace(/\\/g, '\\\\')}')">
+                            <span style="color:var(--accent); font-weight:bold;">..</span>
+                        </div>
+                    `;
+                }
+                if (data.folders.length === 0) {
+                    html += `<div style="color:var(--text-secondary); text-align:center; padding-top:20px;">no subdirectories found.</div>`;
+                } else {
+                    html += data.folders.map(f => {
+                        const fullPath = (data.currentPath.endsWith('\\') || data.currentPath.endsWith('/')) 
+                            ? data.currentPath + f 
+                            : data.currentPath + (navigator.platform.indexOf('Win') !== -1 ? '\\' : '/') + f;
+                        return `
+                            <div class="datapack-item" style="cursor:pointer;" onclick="loadDirBrowserPath('${fullPath.replace(/\\/g, '\\\\')}')">
+                                <span>${f}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }
+                listContainer.innerHTML = html;
+            } catch (e) {
+                console.error("Browse failed", e);
+            }
+        }
+
+        function navigateBrowserUp() {
+            const val = document.getElementById('dir-browser-path-input').value;
+            const parts = val.replace(/\\/g, '/').split('/');
+            if (parts.length > 1) {
+                parts.pop();
+                let parent = parts.join('/');
+                if (parent.endsWith(':')) parent += '/';
+                loadDirBrowserPath(parent);
+            }
+        }
+
+        function confirmDirBrowserSelection() {
+            document.getElementById(activePathInputId).value = browserCurrentPath;
+            closeDirBrowser();
+        }
+
+        async function saveSettings() {
+            const dir = document.getElementById('settings-dir-input').value.trim();
+            if (!dir) return;
+
+            config.lastMinecraftDir = dir;
+            try {
+                const res = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(config)
+                });
+                if (res.ok) {
+                    await fetchInstanceData();
+                    alert("Configurations saved.");
+                    switchTab('dash');
+                }
+            } catch (e) {
+                alert("Failed to save configurations: " + e.message);
+            }
+        }
+
+        async function loadDetectedInstances() {
+            try {
+                const res = await fetch('/api/detect-instances');
+                const instances = await res.json();
+                
+                const select = document.getElementById('detected-instances-select');
+                if (select) {
+                    select.innerHTML = '<option value="">-- select detected instance --</option>';
+                    instances.forEach(inst => {
+                        const opt = document.createElement('option');
+                        opt.value = inst.path;
+                        opt.textContent = inst.name;
+                        select.appendChild(opt);
+                    });
+                }
+                
+                const setupSelect = document.getElementById('setup-detected-select');
+                if (setupSelect) {
+                    setupSelect.innerHTML = '<option value="">-- select detected instance --</option>';
+                    instances.forEach(inst => {
+                        const opt = document.createElement('option');
+                        opt.value = inst.path;
+                        opt.textContent = inst.name;
+                        setupSelect.appendChild(opt);
+                    });
+                }
+            } catch (e) {
+                console.error("Failed to load auto-detected instances", e);
+            }
+        }
+
+        function selectDetectedInstance(select) {
+            if (select.value) {
+                document.getElementById('settings-dir-input').value = select.value;
+            }
+        }
+
+        async function loadCompanionIPs() {
+            try {
+                const res = await fetch('/api/network-ips');
+                const ips = await res.json();
+                const select = document.getElementById('companion-ip-select');
+                if (!select) return;
+
+                if (ips.length === 0) {
+                    select.innerHTML = '<option value="">no network adapters found</option>';
+                    document.getElementById('companion-qr-loading').textContent = 'No local IP';
+                    return;
+                }
+
+                // Populate adapter dropdown options
+                select.innerHTML = ips.map(item => `
+                    <option value="${item.url}">${item.name} (${item.ip})</option>
+                `).join('');
+
+                // Auto select first interface IP
+                select.value = ips[0].url;
+                generateCompanionQRCode(ips[0].url);
+            } catch (e) {
+                console.error("Failed to load companion IPs", e);
+                const select = document.getElementById('companion-ip-select');
+                if (select) {
+                    select.innerHTML = '<option value="">failed to load network adapters</option>';
+                }
+            }
+        }
+
+        function generateCompanionQRCode(url) {
+            const img = document.getElementById('companion-qr-image');
+            const loading = document.getElementById('companion-qr-loading');
+            const link = document.getElementById('companion-link');
+            if (!img || !loading || !link) return;
+
+            img.style.display = 'none';
+            loading.style.display = 'block';
+            loading.textContent = 'generating QR...';
+
+            link.href = url;
+            link.textContent = url;
+
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(url)}`;
+            img.src = qrUrl;
+
+            img.onload = () => {
+                loading.style.display = 'none';
+                img.style.display = 'block';
+            };
+
+            img.onerror = () => {
+                loading.textContent = 'QR offline';
+            };
+        }
+
+        // ==========================================
+        // Module 7: Background Installation Daemon
+        // ==========================================
+        async function startInstallationProgress(tasks) {
+            try {
+                const res = await fetch('/api/install', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        targetDir: config.lastMinecraftDir,
+                        tasks
+                    })
+                });
+
+                if (res.ok) {
+                    document.getElementById('overlay').style.display = 'flex';
+                    document.getElementById('btn-cancel-install').disabled = false;
+                    document.getElementById('btn-close-progress').disabled = true;
+                    document.getElementById('progress-console-logs').innerHTML = '';
+                    document.getElementById('progress-fill-bar').style.width = '0%';
+                    document.getElementById('progress-text-pct').textContent = '0%';
+                    document.getElementById('progress-phase-label').textContent = 'step: initializing pre-flight checks';
+
+                    clearInterval(installPollInterval);
+                    installPollInterval = setInterval(pollInstallStatus, 300);
+                }
+            } catch (e) {
+                alert("Failed to initiate installation: " + e.message);
+            }
+        }
+
+        async function pollInstallStatus() {
+            try {
+                const res = await fetch('/api/install/status');
+                const state = await res.json();
+
+                if (state.status === 'idle') {
+                    clearInterval(installPollInterval);
+                    return;
+                }
+
+                document.getElementById('progress-phase-label').textContent = `step: executing ${state.phase}`;
+
+                const consoleLogs = document.getElementById('progress-console-logs');
+                consoleLogs.innerHTML = state.log.map(line => `<div>${line}</div>`).join('');
+                consoleLogs.scrollTop = consoleLogs.scrollHeight;
+
+                if (state.phase === 'download') {
+                    document.getElementById('progress-fill-bar').style.width = `${state.progress.overallPct}%`;
+                    document.getElementById('progress-text-pct').textContent = `${state.progress.overallPct}%`;
+                } else if (state.status === 'completed') {
+                    document.getElementById('progress-fill-bar').style.width = '100%';
+                    document.getElementById('progress-text-pct').textContent = '100%';
+                }
+
+                if (state.status === 'completed' || state.status === 'failed' || state.status === 'cancelled') {
+                    clearInterval(installPollInterval);
+                    document.getElementById('btn-cancel-install').disabled = true;
+                    document.getElementById('btn-close-progress').disabled = false;
+                    document.getElementById('progress-phase-label').textContent = `step: installation ${state.status}`;
+                    await fetchInstanceData();
+                }
+            } catch (e) {
+                console.error("Polling status failed", e);
+            }
+        }
+
+        async function cancelInstall() {
+            await fetch('/api/install/cancel', { method: 'POST' });
+        }
+
+        function closeProgressOverlay() {
+            document.getElementById('overlay').style.display = 'none';
+        }
+
+        // Cart controllers
+        // Cart controllers
+        function removeCartItem(projectId) {
+            cart = cart.filter(c => c.project_id !== projectId);
+            openCartPane();
+            updateQueueFooter();
+        }
+
+        function routeToDatapackSearch() {
+            if (!activeWorld) return;
+            mainFrameSetActiveWorld(activeWorld.directoryName);
+            switchTab('mods');
+            document.getElementById('search-type-select').value = "datapack";
+            performSearch();
+        }
+
+        async function checkoutCart() {
+            if (cart.length === 0) return;
+
+            let targetWorld = null;
+            const hasDatapacks = cart.some(c => c.project_type === 'datapack');
+            if (hasDatapacks) {
+                targetWorld = await resolveTargetWorldForDatapacks();
+                if (!targetWorld) return;
+            }
+
+            const tasks = [];
+            for (const item of cart) {
+                try {
+                    const task = await resolveModrinthDownloadTask(item, targetWorld);
+                    if (task) {
+                        tasks.push(...task);
+                    }
+                } catch (e) {
+                    alert(`Failed to resolve version for ${item.title}: ${e.message}`);
+                    return;
+                }
+            }
+
+            if (tasks.length === 0) {
+                alert("No compatible versions resolved for the cart items.");
+                return;
+            }
+
+            closeContextPane();
+            document.getElementById('cart-mode-check').checked = false;
+            cart = [];
+            updateQueueFooter();
+            mainFrameClearActiveWorld();
+
+            startInstallationProgress(tasks);
+        }
+
+        async function initiateSingleInstall() {
+            if (!selectedProject) return;
+
+            let targetWorld = null;
+            if (selectedProject.project_type === 'datapack') {
+                targetWorld = await resolveTargetWorldForDatapacks();
+                if (!targetWorld) return;
+            }
+
+            try {
+                const tasks = await resolveModrinthDownloadTask(selectedProject, targetWorld);
+                if (tasks && tasks.length > 0) {
+                    closeContextPane();
+                    startInstallationProgress(tasks);
+                } else {
+                    alert("No compatible version found on Modrinth.");
+                }
+            } catch (e) {
+                alert("Failed resolving dependencies: " + e.message);
+            }
+        }
+
+        async function launchInstance() {
+            try {
+                const res = await fetch('/api/launch', { method: 'POST' });
+                const isJson = res.headers.get('content-type')?.includes('application/json');
+                if (res.ok) {
+                    const data = isJson ? await res.json() : {};
+                    alert(data.message || "Launcher started.");
+                } else {
+                    if (res.status === 404) {
+                        alert("Failed to launch: The '/api/launch' endpoint was not found. Please restart the helper agent (node server.js or start.bat) to load the new updates!");
+                        return;
+                    }
+                    const text = await res.text();
+                    let errMsg = text;
+                    if (isJson) {
+                        try { errMsg = JSON.parse(text).error; } catch(e) {}
+                    }
+                    alert("Failed to launch: " + errMsg);
+                }
+            } catch (e) {
+                alert("Connection error: " + e.message);
+            }
+        }
+
+        async function openInstanceFolder() {
+            try {
+                const res = await fetch('/api/open-folder', { method: 'POST' });
+                const isJson = res.headers.get('content-type')?.includes('application/json');
+                if (res.ok) {
+                    // Success
+                } else {
+                    if (res.status === 404) {
+                        alert("Failed to open folder: The '/api/open-folder' endpoint was not found. Please restart the helper agent (node server.js or start.bat) to load the new updates!");
+                        return;
+                    }
+                    const text = await res.text();
+                    let errMsg = text;
+                    if (isJson) {
+                        try { errMsg = JSON.parse(text).error; } catch(e) {}
+                    }
+                    alert("Failed to open folder: " + errMsg);
+                }
+            } catch (e) {
+                alert("Connection error: " + e.message);
+            }
+        }
+
+        // Theme selector modal controllers
+        function openThemeSelector() {
+            const overlay = document.getElementById('theme-selector-overlay');
+            const container = document.getElementById('theme-list-container');
+            const currentTheme = localStorage.getItem('minestaller-theme') || 'dark';
+            const themes = window.__themes || {};
+
+            container.innerHTML = Object.entries(themes).map(([key, theme]) => {
+                const isActive = (key === currentTheme);
+                return `
+                    <div class="theme-card" onclick="selectTheme('${key}')" style="border: 1px solid ${isActive ? 'var(--accent)' : 'var(--border)'}; border-radius: 6px; padding: 10px; cursor: pointer; display: flex; flex-direction: column; gap: 8px; background: var(--bg-card); transition: all 0.1s ease-in-out;">
+                        <div style="font-family: ${key === 'bloxy' ? "'Press Start 2P', monospace" : 'var(--font-mono)'}; font-size: ${key === 'bloxy' ? '8px' : '11px'}; font-weight: bold; color: ${isActive ? 'var(--accent)' : 'var(--text-primary)'}; text-transform: lowercase; line-height: 1.2;">
+                            ${key}${isActive ? ' - current' : ''}
+                        </div>
+                        <div style="display: flex; gap: 4px;">
+                            <div style="width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); background: ${theme['--bg-base']};" title="base background"></div>
+                            <div style="width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); background: ${theme['--bg-panel']};" title="panel background"></div>
+                            <div style="width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); background: ${theme['--bg-card']};" title="card background"></div>
+                            <div style="width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); background: ${theme['--accent']};" title="accent color"></div>
+                            <div style="width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--border); background: ${theme['--text-primary']};" title="primary text"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            overlay.style.display = 'flex';
+        }
+
+        function closeThemeSelector() {
+            document.getElementById('theme-selector-overlay').style.display = 'none';
+        }
+
+        function selectTheme(key) {
+            const themes = window.__themes || {};
+            const theme = themes[key];
+            if (!theme) return;
+
+            const root = document.documentElement;
+            for (const [prop, val] of Object.entries(theme)) {
+                root.style.setProperty(prop, val);
+            }
+
+            localStorage.setItem('minestaller-theme', key);
+            openThemeSelector(); // Refresh list to show updated (current) label
+        }
+
+        // Launcher Migrater controller helpers
+        async function loadPorterDetectedInstances() {
+            try {
+                const res = await fetch('/api/detect-instances');
+                const instances = await res.json();
+                const sourceSelect = document.getElementById('porter-source-select');
+                const destSelect = document.getElementById('porter-dest-select');
+
+                sourceSelect.innerHTML = '<option value="">-- select source profile --</option>';
+                destSelect.innerHTML = '<option value="">-- select destination profile --</option>';
+
+                instances.forEach(inst => {
+                    const optSource = document.createElement('option');
+                    optSource.value = inst.path;
+                    optSource.textContent = inst.name;
+                    sourceSelect.appendChild(optSource);
+
+                    const optDest = document.createElement('option');
+                    optDest.value = inst.path;
+                    optDest.textContent = inst.name;
+                    destSelect.appendChild(optDest);
+                });
+            } catch (e) {
+                console.error("Failed to load instances for porter", e);
+            }
+        }
+
+        function selectPorterDetectedInstance(type, select) {
+            if (select.value) {
+                if (type === 'source') {
+                    document.getElementById('porter-source-input').value = select.value;
+                } else if (type === 'dest') {
+                    document.getElementById('porter-dest-input').value = select.value;
+                }
+            }
+        }
+
+        async function portProfileData() {
+            const sourcePath = document.getElementById('porter-source-input').value.trim();
+            const destPath = document.getElementById('porter-dest-input').value.trim();
+            const consoleLogs = document.getElementById('porter-console-logs');
+
+            if (!sourcePath || !destPath) {
+                alert("Please select or enter both source and destination profile folders.");
+                return;
+            }
+
+            consoleLogs.innerHTML = '<div>[INFO] Initializing profile porting...</div>';
+
+            const options = {
+                mods: document.getElementById('porter-sync-mods').checked,
+                config: document.getElementById('porter-sync-config').checked,
+                resourcepacks: document.getElementById('porter-sync-resourcepacks').checked,
+                shaders: document.getElementById('porter-sync-shaders').checked,
+                saves: document.getElementById('porter-sync-saves').checked,
+                settings: document.getElementById('porter-sync-settings').checked,
+                clearDest: document.getElementById('porter-clear-dest').checked
+            };
+
+            try {
+                const res = await fetch('/api/port-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sourcePath, destPath, options })
+                });
+
+                const data = await res.json();
+                if (data.log && data.log.length > 0) {
+                    consoleLogs.innerHTML = data.log.map(line => `<div>${line}</div>`).join('');
+                } else {
+                    consoleLogs.innerHTML += `<div>[INFO] Migration triggered.</div>`;
+                }
+                consoleLogs.scrollTop = consoleLogs.scrollHeight;
+
+                if (res.ok) {
+                    alert("Profile migration completed successfully!");
+                    await fetchInstanceData(); // Refresh main dashboard stats if active path changed
+                } else {
+                    alert("Migration failed: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                consoleLogs.innerHTML += `<div style="color:red;">[ERROR] Connection failed: ${e.message}</div>`;
+                consoleLogs.scrollTop = consoleLogs.scrollHeight;
+                alert("Connection error: " + e.message);
+            }
+        }
+
+        async function toggleResourcepack(packName, active) {
+            const instancePath = currentInstancePath || config.lastMinecraftDir;
+            if (!instancePath) {
+                alert("No active Minecraft instance path found.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/resourcepacks/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath, packName, active })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await fetchInstanceData();
+                } else {
+                    alert("Failed to toggle resourcepack: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error toggling resourcepack: " + e.message);
+            }
+        }
+
+        async function toggleAllResourcepacks(active) {
+            const instancePath = currentInstancePath || config.lastMinecraftDir;
+            if (!instancePath) {
+                alert("No active Minecraft instance path found.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/resourcepacks/toggle-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath, active })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await fetchInstanceData();
+                } else {
+                    alert("Failed to toggle resourcepacks: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error toggling resourcepacks: " + e.message);
+            }
+        }
+
+        async function toggleShader(shaderName, active) {
+            const instancePath = currentInstancePath || config.lastMinecraftDir;
+            if (!instancePath) {
+                alert("No active Minecraft instance path found.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/shaders/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath, shaderName, active })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await fetchInstanceData();
+                } else {
+                    alert("Failed to toggle shader: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error toggling shader: " + e.message);
+            }
+        }
+
+        async function toggleAllShaders(active) {
+            const instancePath = currentInstancePath || config.lastMinecraftDir;
+            if (!instancePath) {
+                alert("No active Minecraft instance path found.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/shaders/toggle-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath, active })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await fetchInstanceData();
+                } else {
+                    alert("Failed to deactivate shaders: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error toggling shaders: " + e.message);
+            }
+        }
+
+        async function toggleShadersSystem(active) {
+            const instancePath = currentInstancePath || config.lastMinecraftDir;
+            if (!instancePath) {
+                alert("No active Minecraft instance path found.");
+                return;
+            }
+            try {
+                const res = await fetch('/api/shaders/toggle-system', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath, active })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await fetchInstanceData();
+                } else {
+                    alert("Failed to toggle shaders: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error toggling shaders: " + e.message);
+            }
+        }
+
+        function getConnectCommandDetails(tabId) {
+            const isFile = window.location.protocol === 'file:';
+            let localPath = "";
+            if (isFile) {
+                let path = window.location.pathname;
+                if (path.startsWith('/') && path.charAt(2) === ':') {
+                    path = path.substring(1);
+                }
+                const lastSlashIdx = path.toLowerCase().indexOf('/public/index.html');
+                if (lastSlashIdx !== -1) {
+                    localPath = path.substring(0, lastSlashIdx);
+                }
+            }
+
+            if (isFile && localPath) {
+                const winPath = localPath.replace(/\//g, '\\');
+                const unixPath = localPath.replace(/\\/g, '/');
+                if (tabId === 'universal' || tabId === 'windows') {
+                    return {
+                        command: `cd /d "${winPath}" && start.bat`,
+                        tooltip: "Runs your local start.bat batch file to launch the helper agent on port 5000.",
+                        terminalName: "PowerShell or Command Prompt on Windows."
+                    };
+                } else {
+                    return {
+                        command: `cd "${unixPath}" && node server.js`,
+                        tooltip: "Changes directory to the local installation folder and runs node server.js directly.",
+                        terminalName: "Terminal (zsh or bash) on macOS/Linux."
+                    };
+                }
+            } else {
+                const origin = window.location.origin;
+                if (tabId === 'universal') {
+                    return {
+                        command: `curl -sSL ${origin}/connect.bat -o connect.bat && sh connect.bat || connect.bat`,
+                        tooltip: "Downloads and runs a self-deleting script compatible with Windows (CMD/PowerShell), macOS, and Linux to launch the local agent on port 5000.",
+                        terminalName: "any command line interface (Terminal, PowerShell, CMD)."
+                    };
+                } else if (tabId === 'windows') {
+                    return {
+                        command: `powershell -ExecutionPolicy Bypass -Command "irm ${origin}/connect.ps1 | iex"`,
+                        tooltip: "Downloads and runs the connection helper in memory via PowerShell without permanent file changes.",
+                        terminalName: "PowerShell or Command Prompt on Windows."
+                    };
+                } else {
+                    return {
+                        command: `curl -fsSL ${origin}/connect.sh | bash`,
+                        tooltip: "Downloads and runs the Unix connection helper in bash to set up and start the agent.",
+                        terminalName: "Terminal (zsh or bash) on macOS/Linux."
+                    };
+                }
+            }
+        }
+
+        let currentConnectTab = 'universal';
+
+        function openConnectDeviceModal() {
+            document.getElementById('connect-device-overlay').style.display = 'flex';
+            switchConnectTab('universal');
+        }
+
+        function closeConnectDeviceModal() {
+            document.getElementById('connect-device-overlay').style.display = 'none';
+        }
+
+        function switchConnectTab(tabId) {
+            currentConnectTab = tabId;
+            const tabs = ['universal', 'windows', 'unix'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-connect-${t}`);
+                if (el) {
+                    if (t === tabId) {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
+                    }
+                }
+            });
+
+            const details = getConnectCommandDetails(tabId);
+
+            // Update command text
+            const cmdText = document.getElementById('connect-command-text');
+            if (cmdText) {
+                cmdText.textContent = details.command;
+            }
+
+            // Update tooltip text
+            const tooltip = document.getElementById('connect-tooltip');
+            if (tooltip) {
+                tooltip.textContent = details.tooltip;
+            }
+
+            // Update step 2 text
+            const stepTwo = document.getElementById('connect-step-two');
+            if (stepTwo) {
+                stepTwo.innerHTML = `Open your terminal window: <strong>${details.terminalName}</strong>`;
+            }
+
+            // Reset copy button status
+            const copyBtn = document.getElementById('btn-copy-connect');
+            if (copyBtn) {
+                copyBtn.querySelector('span').textContent = 'copy';
+                const icon = copyBtn.querySelector('i');
+                icon.className = 'ti ti-copy';
+            }
+        }
+
+        async function copyConnectCommand() {
+            const details = getConnectCommandDetails(currentConnectTab);
+            try {
+                await navigator.clipboard.writeText(details.command);
+                const copyBtn = document.getElementById('btn-copy-connect');
+                if (copyBtn) {
+                    copyBtn.querySelector('span').textContent = 'copied!';
+                    const icon = copyBtn.querySelector('i');
+                    icon.className = 'ti ti-check';
+                }
+            } catch (err) {
+                alert("Failed to copy to clipboard: " + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
