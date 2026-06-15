@@ -4,9 +4,10 @@ echo "=== Minestaller Agent Connection Setup ==="
 AGENT_DIR="$HOME/minestaller-agent"
 mkdir -p "$AGENT_DIR"
 
-# Check if agent is already installed — skip download if it is
-if [ -f "$AGENT_DIR/server.js" ] && [ -f "$AGENT_DIR/package.json" ]; then
+# Check if agent is already installed — skip download if it is (ensure modular files are present too)
+if [ -f "$AGENT_DIR/server.js" ] && [ -f "$AGENT_DIR/package.json" ] && [ -f "$AGENT_DIR/utils/sys.js" ]; then
     echo "Minestaller agent already installed. Skipping download."
+    echo "Note: To force update/reinstall the agent, delete the folder: $AGENT_DIR"
 else
     echo "Downloading Minestaller companion files from GitHub..."
 

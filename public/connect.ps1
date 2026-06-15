@@ -4,11 +4,12 @@ Write-Host "=== Minestaller Agent Connection Setup ===" -ForegroundColor Cyan
 
 $agentDir = "$env:USERPROFILE\minestaller-agent"
 
-# Check if agent is already installed — skip download if it is
-$isInstalled = (Test-Path "$agentDir\server.js") -and (Test-Path "$agentDir\package.json")
+# Check if agent is already installed — skip download if it is (ensure modular files are present too)
+$isInstalled = (Test-Path "$agentDir\server.js") -and (Test-Path "$agentDir\package.json") -and (Test-Path "$agentDir\utils\sys.js")
 
 if ($isInstalled) {
     Write-Host "Minestaller agent already installed. Skipping download." -ForegroundColor Green
+    Write-Host "Note: To force update/reinstall the agent, delete the folder: $agentDir" -ForegroundColor Gray
 } else {
     if (!(Test-Path $agentDir)) {
         New-Item -ItemType Directory -Path $agentDir | Out-Null
