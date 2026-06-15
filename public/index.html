@@ -2255,7 +2255,7 @@
 
             // Try to auto-connect to the agent if it is already running
             try {
-                const res = await fetch(${API_BASE}/api/instance');
+                const res = await fetch('/api/instance');
                 if (res.status === 400 || res.ok) {
                     document.getElementById('startup-welcome-screen').style.display = 'none';
                     await fetchInstanceData();
@@ -2288,7 +2288,7 @@
         // Config Load
         async function loadConfig() {
             try {
-                const res = await fetch(${API_BASE}/api/config');
+                const res = await fetch('/api/config');
                 config = await res.json();
                 document.getElementById('settings-dir-input').value = config.lastMinecraftDir || '';
                 document.getElementById('setup-dir-input').value = config.lastMinecraftDir || '';
@@ -2303,7 +2303,7 @@
         // Fetch all instance details (Agent verify point)
         async function fetchInstanceData() {
             try {
-                const res = await fetch(${API_BASE}/api/instance');
+                const res = await fetch('/api/instance');
                 
                 // Hide connection setup blocker screen
                 document.getElementById('agent-setup-overlay').style.display = 'none';
@@ -2378,7 +2378,7 @@
 
             config.lastMinecraftDir = dir;
             try {
-                const res = await fetch(${API_BASE}/api/config', {
+                const res = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
@@ -2835,7 +2835,7 @@
             }
 
             try {
-                const res = await fetch(${API_BASE}/api/worlds/settings', {
+                const res = await fetch('/api/worlds/settings', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2890,7 +2890,7 @@
             if (!confirm(`Permanently delete datapack "${name}"?`)) return;
 
             try {
-                const res = await fetch(${API_BASE}/api/worlds/datapacks/delete', {
+                const res = await fetch('/api/worlds/datapacks/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3016,7 +3016,7 @@
 
             config.lastMinecraftDir = dir;
             try {
-                const res = await fetch(${API_BASE}/api/config', {
+                const res = await fetch('/api/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
@@ -3033,7 +3033,7 @@
 
         async function loadDetectedInstances() {
             try {
-                const res = await fetch(${API_BASE}/api/detect-instances');
+                const res = await fetch('/api/detect-instances');
                 const instances = await res.json();
                 
                 const select = document.getElementById('detected-instances-select');
@@ -3070,7 +3070,7 @@
 
         async function loadCompanionIPs() {
             try {
-                const res = await fetch(${API_BASE}/api/network-ips');
+                const res = await fetch('/api/network-ips');
                 const ips = await res.json();
                 const select = document.getElementById('companion-ip-select');
                 if (!select) return;
@@ -3129,7 +3129,7 @@
         // ==========================================
         async function startInstallationProgress(tasks) {
             try {
-                const res = await fetch(${API_BASE}/api/install', {
+                const res = await fetch('/api/install', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3157,7 +3157,7 @@
 
         async function pollInstallStatus() {
             try {
-                const res = await fetch(${API_BASE}/api/install/status');
+                const res = await fetch('/api/install/status');
                 const state = await res.json();
 
                 if (state.status === 'idle') {
@@ -3192,7 +3192,7 @@
         }
 
         async function cancelInstall() {
-            await fetch(${API_BASE}/api/install/cancel', { method: 'POST' });
+            await fetch('/api/install/cancel', { method: 'POST' });
         }
 
         function closeProgressOverlay() {
@@ -3276,7 +3276,7 @@
 
         async function launchInstance() {
             try {
-                const res = await fetch(${API_BASE}/api/launch', { method: 'POST' });
+                const res = await fetch('/api/launch', { method: 'POST' });
                 const isJson = res.headers.get('content-type')?.includes('application/json');
                 if (res.ok) {
                     const data = isJson ? await res.json() : {};
@@ -3300,7 +3300,7 @@
 
         async function openInstanceFolder() {
             try {
-                const res = await fetch(${API_BASE}/api/open-folder', { method: 'POST' });
+                const res = await fetch('/api/open-folder', { method: 'POST' });
                 const isJson = res.headers.get('content-type')?.includes('application/json');
                 if (res.ok) {
                     // Success
@@ -3370,7 +3370,7 @@
         // Launcher Migrater controller helpers
         async function loadPorterDetectedInstances() {
             try {
-                const res = await fetch(${API_BASE}/api/detect-instances');
+                const res = await fetch('/api/detect-instances');
                 const instances = await res.json();
                 const sourceSelect = document.getElementById('porter-source-select');
                 const destSelect = document.getElementById('porter-dest-select');
@@ -3427,7 +3427,7 @@
             };
 
             try {
-                const res = await fetch(${API_BASE}/api/port-profile', {
+                const res = await fetch('/api/port-profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ sourcePath, destPath, options })
@@ -3461,7 +3461,7 @@
                 return;
             }
             try {
-                const res = await fetch(${API_BASE}/api/resourcepacks/toggle', {
+                const res = await fetch('/api/resourcepacks/toggle', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ instancePath, packName, active })
@@ -3484,7 +3484,7 @@
                 return;
             }
             try {
-                const res = await fetch(${API_BASE}/api/resourcepacks/toggle-all', {
+                const res = await fetch('/api/resourcepacks/toggle-all', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ instancePath, active })
@@ -3507,7 +3507,7 @@
                 return;
             }
             try {
-                const res = await fetch(${API_BASE}/api/shaders/toggle', {
+                const res = await fetch('/api/shaders/toggle', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ instancePath, shaderName, active })
@@ -3530,7 +3530,7 @@
                 return;
             }
             try {
-                const res = await fetch(${API_BASE}/api/shaders/toggle-all', {
+                const res = await fetch('/api/shaders/toggle-all', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ instancePath, active })
@@ -3553,7 +3553,7 @@
                 return;
             }
             try {
-                const res = await fetch(${API_BASE}/api/shaders/toggle-system', {
+                const res = await fetch('/api/shaders/toggle-system', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ instancePath, active })
