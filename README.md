@@ -1,7 +1,7 @@
 # Minestaller
 
 Minestaller is a retro-futuristic Minecraft management platform. It consists of:
-1. **Java Terminal Client**: A cross-platform Java desktop application styled as a cyber-terminal to browse Modrinth database entries.
+1. **Java Terminal Client**: A cross-platform Java desktop application styled as a cyber-terminal to browse Modrinth database entries. [NOT THE MAIN PROJECT]
 2. **Node.js Companion Web Agent & Dashboard**: A local web companion server and dashboard interface that scans local profile folders, updates world NBT attributes, manages datapacks, toggles shaders/resourcepacks, and downloads Modrinth resources directly into local folders.
 
 ---
