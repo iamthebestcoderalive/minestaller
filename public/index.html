@@ -1352,15 +1352,26 @@
                     </div>
                     <div id="offline-selectors-row" style="display: none; margin-top: 12px; gap: 12px; align-items: center; font-size: 12px; font-family: var(--font-sans);">
                         <span style="color: var(--text-secondary);">Minecraft Version:</span>
-                        <input type="text" class="text-input" id="search-version-filter" style="width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" value="1.20.1" onchange="updateSearchFilters()">
+                        <select class="select-input" id="search-version-filter" style="width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" onchange="onVersionFilterSelectChange()">
+                            <option value="1.21.1">1.21.1</option>
+                            <option value="1.21">1.21</option>
+                            <option value="1.20.4">1.20.4</option>
+                            <option value="1.20.1" selected>1.20.1</option>
+                            <option value="1.19.4">1.19.4</option>
+                            <option value="1.19.2">1.19.2</option>
+                            <option value="1.18.2">1.18.2</option>
+                            <option value="1.16.5">1.16.5</option>
+                            <option value="custom">Custom...</option>
+                        </select>
+                        <input type="text" class="text-input" id="search-version-filter-custom" style="display: none; width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" placeholder="e.g. 1.20.1" onchange="updateSearchFilters()">
                         
                         <span style="color: var(--text-secondary); margin-left: 8px;">Loader:</span>
-                        <select class="select-input" id="search-loader-filter" style="width: 120px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" onchange="updateSearchFilters()">
+                        <select class="select-input" id="search-loader-filter" style="width: 150px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" onchange="updateSearchFilters()">
                             <option value="fabric">fabric</option>
                             <option value="forge">forge</option>
                             <option value="neoforge">neoforge</option>
                             <option value="quilt">quilt</option>
-                            <option value="vanilla">vanilla</option>
+                            <option value="vanilla">vanilla (no loader)</option>
                         </select>
                     </div>
                 </div>
@@ -2483,18 +2494,73 @@
             }
         }
 
+        function onVersionFilterSelectChange() {
+            const selectEl = document.getElementById('search-version-filter');
+            const customEl = document.getElementById('search-version-filter-custom');
+            if (selectEl.value === 'custom') {
+                customEl.style.display = 'inline-block';
+                customEl.focus();
+            } else {
+                customEl.style.display = 'none';
+                updateSearchFilters();
+            }
+        }
+
+        function syncSearchFilterUI() {
+            const selectVer = document.getElementById('search-version-filter');
+            const customVerInput = document.getElementById('search-version-filter-custom');
+            const loadFilt = document.getElementById('search-loader-filter');
+            
+            if (selectVer) {
+                // Check if browserInstanceVersion is a predefined option
+                let isPredefined = false;
+                for (let i = 0; i < selectVer.options.length; i++) {
+                    if (selectVer.options[i].value === browserInstanceVersion) {
+                        isPredefined = true;
+                        break;
+                    }
+                }
+                
+                if (isPredefined) {
+                    selectVer.value = browserInstanceVersion;
+                    if (customVerInput) customVerInput.style.display = 'none';
+                } else {
+                    selectVer.value = 'custom';
+                    if (customVerInput) {
+                        customVerInput.style.display = 'inline-block';
+                        customVerInput.value = browserInstanceVersion;
+                    }
+                }
+            }
+            
+            if (loadFilt) {
+                loadFilt.value = browserInstanceLoader;
+            }
+        }
+
         function updateSearchFilters() {
-            const v = document.getElementById('search-version-filter').value.trim();
-            const l = document.getElementById('search-loader-filter').value;
+            const selectVer = document.getElementById('search-version-filter');
+            const customVerInput = document.getElementById('search-version-filter-custom');
+            let v = '1.20.1';
+            if (selectVer) {
+                v = selectVer.value;
+                if (v === 'custom' && customVerInput) {
+                    v = customVerInput.value.trim() || '1.20.1';
+                }
+            }
+            const l = document.getElementById('search-loader-filter') ? document.getElementById('search-loader-filter').value : 'fabric';
+            
             if (v) {
                 browserInstanceVersion = v;
-                document.getElementById('status-version').textContent = v;
+                const statusVer = document.getElementById('status-version');
+                if (statusVer) statusVer.textContent = v;
                 const statVerEl = document.getElementById('stat-version');
                 if (statVerEl) statVerEl.textContent = v;
             }
             if (l) {
                 browserInstanceLoader = l;
-                document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">${l}</span>`;
+                const statusLoader = document.getElementById('status-loader');
+                if (statusLoader) statusLoader.innerHTML = `<span style="color:var(--accent);">${l}</span>`;
             }
             performSearch();
         }
@@ -2600,51 +2666,264 @@
             // Show selectors row and sync values
             const selRow = document.getElementById('offline-selectors-row');
             if (selRow) selRow.style.display = 'flex';
-            const verFilt = document.getElementById('search-version-filter');
-            if (verFilt) verFilt.value = "1.20.1";
-            const loadFilt = document.getElementById('search-loader-filter');
-            if (loadFilt) loadFilt.value = "fabric";
+            syncSearchFilterUI();
         }
 
         async function detectMcVersionBrowser() {
+            let detectedVersion = null;
+            let detectedLoader = null;
+
+            // 1. Try instance.cfg (Prism / MultiMC)
             try {
-                const lpHandle = await localMinecraftDirHandle.getFileHandle('launcher_profiles.json', { create: false });
-                const file = await lpHandle.getFile();
+                const cfgHandle = await localMinecraftDirHandle.getFileHandle('instance.cfg', { create: false });
+                const file = await cfgHandle.getFile();
                 const text = await file.text();
-                const data = JSON.parse(text);
-                if (data.profiles) {
-                    for (const p of Object.values(data.profiles)) {
-                        if (p.lastVersionId && /^\d+\.\d+(\.\d+)?$/.test(p.lastVersionId)) {
-                            return p.lastVersionId;
+                const lines = text.split('\n');
+                let mcVer = null;
+                let loaderType = 'vanilla';
+                
+                for (let line of lines) {
+                    line = line.trim();
+                    if (line.startsWith('minecraftVersion=')) {
+                        mcVer = line.split('=')[1].trim();
+                    } else if (line.startsWith('IntendedVersion=')) {
+                        mcVer = line.split('=')[1].trim();
+                    } else if (line.startsWith('iconKey=')) {
+                        const icon = line.split('=')[1].trim().toLowerCase();
+                        if (icon.includes('fabric')) loaderType = 'fabric';
+                        else if (icon.includes('forge')) loaderType = 'forge';
+                        else if (icon.includes('neoforge')) loaderType = 'neoforge';
+                        else if (icon.includes('quilt')) loaderType = 'quilt';
+                    }
+                    
+                    if (line.toLowerCase().includes('loader') || line.toLowerCase().includes('addon')) {
+                        const parts = line.split('=');
+                        if (parts.length > 1) {
+                            const val = parts[1].trim().toLowerCase();
+                            if (val.includes('fabric')) loaderType = 'fabric';
+                            else if (val.includes('forge')) loaderType = 'forge';
+                            else if (val.includes('neoforge')) loaderType = 'neoforge';
+                            else if (val.includes('quilt')) loaderType = 'quilt';
                         }
                     }
                 }
-            } catch (err) {}
-            
-            try {
-                const versionsHandle = await localMinecraftDirHandle.getDirectoryHandle('versions', { create: false });
-                const versions = [];
-                for await (const entry of versionsHandle.values()) {
-                    if (entry.kind === 'directory' && /^\d+\.\d+(\.\d+)?$/.test(entry.name)) {
-                        versions.push(entry.name);
-                    }
+                if (mcVer) {
+                    detectedVersion = mcVer;
+                    detectedLoader = loaderType;
                 }
-                if (versions.length > 0) {
-                    versions.sort((a, b) => {
-                        const partsA = a.split('.').map(Number);
-                        const partsB = b.split('.').map(Number);
-                        for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-                            const valA = partsA[i] || 0;
-                            const valB = partsB[i] || 0;
-                            if (valA !== valB) return valB - valA;
+            } catch (err) {}
+
+            // 2. Try mmc-pack.json (Prism / MultiMC components)
+            if (!detectedVersion) {
+                try {
+                    const packHandle = await localMinecraftDirHandle.getFileHandle('mmc-pack.json', { create: false });
+                    const file = await packHandle.getFile();
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    if (data.components) {
+                        let mcVer = null;
+                        let loaderType = 'vanilla';
+                        for (const comp of data.components) {
+                            if (comp.uid === 'net.minecraft' && comp.version) {
+                                mcVer = comp.version;
+                            } else if (comp.uid === 'net.fabricmc.fabric-loader') {
+                                loaderType = 'fabric';
+                            } else if (comp.uid === 'net.minecraftforge') {
+                                loaderType = 'forge';
+                            } else if (comp.uid === 'org.quiltmc.quilt-loader') {
+                                loaderType = 'quilt';
+                            } else if (comp.uid === 'net.neoforged') {
+                                loaderType = 'neoforge';
+                            }
                         }
-                        return 0;
-                    });
-                    return versions[0];
+                        if (mcVer) {
+                            detectedVersion = mcVer;
+                            detectedLoader = loaderType;
+                        }
+                    }
+                } catch (err) {}
+            }
+
+            // 3. Try launcher_profiles.json
+            if (!detectedVersion) {
+                try {
+                    const lpHandle = await localMinecraftDirHandle.getFileHandle('launcher_profiles.json', { create: false });
+                    const file = await lpHandle.getFile();
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    if (data.profiles) {
+                        const targetDirName = localMinecraftDirHandle.name.toLowerCase();
+                        for (const p of Object.values(data.profiles)) {
+                            if (p.lastVersionId) {
+                                const lastVer = p.lastVersionId.toLowerCase();
+                                let isMatch = false;
+                                if (p.gameDir) {
+                                    const gd = p.gameDir.replace(/\\/g, '/').toLowerCase();
+                                    if (gd.endsWith('/' + targetDirName) || targetDirName.endsWith('/' + gd) || gd === targetDirName) {
+                                        isMatch = true;
+                                    }
+                                } else {
+                                    isMatch = true;
+                                }
+
+                                if (isMatch) {
+                                    let loaderType = 'vanilla';
+                                    if (lastVer.includes('fabric')) loaderType = 'fabric';
+                                    else if (lastVer.includes('neoforge')) loaderType = 'neoforge';
+                                    else if (lastVer.includes('forge')) loaderType = 'forge';
+                                    else if (lastVer.includes('quilt')) loaderType = 'quilt';
+
+                                    const match = lastVer.match(/(1\.\d+(?:\.\d+)?)/);
+                                    if (match) {
+                                        detectedVersion = match[1];
+                                        detectedLoader = loaderType;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (err) {}
+            }
+
+            // 4. Try folder name fallback (e.g. Mero_1.21.11 -> 1.21.11)
+            if (!detectedVersion) {
+                const name = localMinecraftDirHandle.name.toLowerCase();
+                const match = name.match(/(1\.\d+(?:\.\d+)?)/);
+                if (match) {
+                    detectedVersion = match[1];
                 }
-            } catch (err) {}
-            
-            return "1.20.1";
+                if (name.includes('fabric')) detectedLoader = 'fabric';
+                else if (name.includes('neoforge')) detectedLoader = 'neoforge';
+                else if (name.includes('forge')) detectedLoader = 'forge';
+                else if (name.includes('quilt')) detectedLoader = 'quilt';
+            }
+
+            // 5. Try to guess from mods folder filenames first (extremely fast)
+            if (!detectedVersion || !detectedLoader || detectedLoader === 'vanilla') {
+                try {
+                    const modsHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: false });
+                    let fabricCount = 0;
+                    let forgeCount = 0;
+                    let neoforgeCount = 0;
+                    let quiltCount = 0;
+                    let jarVersions = [];
+
+                    for await (const entry of modsHandle.values()) {
+                        if (entry.kind === 'file' && entry.name.endsWith('.jar')) {
+                            const name = entry.name.toLowerCase();
+                            if (name.includes('fabric')) fabricCount++;
+                            if (name.includes('neoforge')) neoforgeCount++;
+                            if (name.includes('forge') && !name.includes('neoforge')) forgeCount++;
+                            if (name.includes('quilt')) quiltCount++;
+
+                            const match = name.match(/(1\.\d+(?:\.\d+)?)/);
+                            if (match) {
+                                jarVersions.push(match[1]);
+                            }
+                        }
+                    }
+
+                    if (!detectedLoader || detectedLoader === 'vanilla') {
+                        if (fabricCount > 0 && fabricCount >= forgeCount && fabricCount >= neoforgeCount) detectedLoader = 'fabric';
+                        else if (neoforgeCount > 0) detectedLoader = 'neoforge';
+                        else if (forgeCount > 0) detectedLoader = 'forge';
+                        else if (quiltCount > 0) detectedLoader = 'quilt';
+                    }
+
+                    if (!detectedVersion && jarVersions.length > 0) {
+                        const freqMap = {};
+                        let maxCount = 0;
+                        let mostFreqVer = jarVersions[0];
+                        for (const v of jarVersions) {
+                            freqMap[v] = (freqMap[v] || 0) + 1;
+                            if (freqMap[v] > maxCount) {
+                                maxCount = freqMap[v];
+                                mostFreqVer = v;
+                            }
+                        }
+                        detectedVersion = mostFreqVer;
+                    }
+                } catch (err) {}
+            }
+
+            // 6. Try parsing JAR zip contents for a sample of mods (up to 3 JARs) to verify
+            if (typeof JSZip !== 'undefined' && (!detectedVersion || !detectedLoader || detectedLoader === 'vanilla')) {
+                try {
+                    const modsHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: false });
+                    let scanned = 0;
+                    for await (const entry of modsHandle.values()) {
+                        if (entry.kind === 'file' && entry.name.endsWith('.jar') && scanned < 3) {
+                            scanned++;
+                            try {
+                                const file = await entry.getFile();
+                                const buffer = await file.arrayBuffer();
+                                const zip = await JSZip.loadAsync(buffer);
+                                
+                                const fabricJson = zip.file('fabric.mod.json');
+                                const quiltJson = zip.file('quilt.mod.json');
+                                const modsToml = zip.file('META-INF/mods.toml');
+
+                                if (fabricJson) {
+                                    if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'fabric';
+                                    if (!detectedVersion) {
+                                        const content = await fabricJson.async('text');
+                                        const modData = JSON.parse(content);
+                                        if (modData.depends && modData.depends.minecraft) {
+                                            const match = modData.depends.minecraft.match(/(1\.\d+(?:\.\d+)?)/);
+                                            if (match) {
+                                                detectedVersion = match[1];
+                                            }
+                                        }
+                                    }
+                                } else if (quiltJson) {
+                                    if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'quilt';
+                                } else if (modsToml) {
+                                    const content = await modsToml.async('text');
+                                    if (content.toLowerCase().includes('neoforge')) {
+                                        if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'neoforge';
+                                    } else {
+                                        if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'forge';
+                                    }
+                                }
+                            } catch (zipErr) {
+                                console.warn("Failed to parse mod ZIP metadata for " + entry.name, zipErr);
+                            }
+                        }
+                    }
+                } catch (err) {}
+            }
+
+            // 7. Last resort: scan the versions folder
+            if (!detectedVersion) {
+                try {
+                    const versionsHandle = await localMinecraftDirHandle.getDirectoryHandle('versions', { create: false });
+                    const versions = [];
+                    for await (const entry of versionsHandle.values()) {
+                        if (entry.kind === 'directory' && /^\d+\.\d+(\.\d+)?$/.test(entry.name)) {
+                            versions.push(entry.name);
+                        }
+                    }
+                    if (versions.length > 0) {
+                        versions.sort((a, b) => {
+                            const partsA = a.split('.').map(Number);
+                            const partsB = b.split('.').map(Number);
+                            for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                                const valA = partsA[i] || 0;
+                                const valB = partsB[i] || 0;
+                                if (valA !== valB) return valB - valA;
+                            }
+                            return 0;
+                        });
+                        detectedVersion = versions[0];
+                    }
+                } catch (err) {}
+            }
+
+            return {
+                mcVersion: detectedVersion || '1.20.1',
+                loader: detectedLoader || 'fabric'
+            };
         }
 
         async function fetchInstanceDataBrowser() {
@@ -2687,7 +2966,9 @@
             } catch (err) {}
 
             if (!browserInstanceVersion || browserInstanceVersion === "Unknown" || browserInstanceVersion === "--") {
-                browserInstanceVersion = await detectMcVersionBrowser();
+                const detected = await detectMcVersionBrowser();
+                browserInstanceVersion = detected.mcVersion;
+                browserInstanceLoader = detected.loader;
             }
 
             document.getElementById('status-dir').innerHTML = `Direct: <span style="color:var(--accent); font-weight:bold;">${localMinecraftDirHandle.name}</span>`;
@@ -2732,10 +3013,7 @@
             // Show selectors row and sync values
             const selRow = document.getElementById('offline-selectors-row');
             if (selRow) selRow.style.display = 'flex';
-            const verFilt = document.getElementById('search-version-filter');
-            if (verFilt) verFilt.value = browserInstanceVersion;
-            const loadFilt = document.getElementById('search-loader-filter');
-            if (loadFilt) loadFilt.value = browserInstanceLoader;
+            syncSearchFilterUI();
         }
 
         // Path truncation helper (show only last folder name)
@@ -3886,7 +4164,20 @@
                         </div>
                         <div class="form-row">
                             <div class="form-label">minecraft version</div>
-                            <input type="text" class="text-input" id="browser-version-override" value="${browserInstanceVersion}" style="max-width:200px;">
+                            <div style="display: flex; gap: 8px; width: 100%; max-width: 200px; align-items: center;">
+                                <select class="select-input" id="browser-version-override" onchange="updateBrowserVersionOverrideSelect()" style="flex: 1; min-width: 100px;">
+                                    <option value="1.21.1" ${browserInstanceVersion === '1.21.1' ? 'selected' : ''}>1.21.1</option>
+                                    <option value="1.21" ${browserInstanceVersion === '1.21' ? 'selected' : ''}>1.21</option>
+                                    <option value="1.20.4" ${browserInstanceVersion === '1.20.4' ? 'selected' : ''}>1.20.4</option>
+                                    <option value="1.20.1" ${browserInstanceVersion === '1.20.1' ? 'selected' : ''}>1.20.1</option>
+                                    <option value="1.19.4" ${browserInstanceVersion === '1.19.4' ? 'selected' : ''}>1.19.4</option>
+                                    <option value="1.19.2" ${browserInstanceVersion === '1.19.2' ? 'selected' : ''}>1.19.2</option>
+                                    <option value="1.18.2" ${browserInstanceVersion === '1.18.2' ? 'selected' : ''}>1.18.2</option>
+                                    <option value="1.16.5" ${browserInstanceVersion === '1.16.5' ? 'selected' : ''}>1.16.5</option>
+                                    <option value="custom" ${!['1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.16.5'].includes(browserInstanceVersion) ? 'selected' : ''}>Custom...</option>
+                                </select>
+                                <input type="text" class="text-input" id="browser-version-override-custom" value="${!['1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.16.5'].includes(browserInstanceVersion) ? browserInstanceVersion : ''}" style="display: ${!['1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.16.5'].includes(browserInstanceVersion) ? 'block' : 'none'}; width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;">
+                            </div>
                         </div>
                         <div class="form-row" style="margin-top:10px;">
                             <div class="form-label">mod loader</div>
@@ -3894,7 +4185,7 @@
                                 <option value="fabric" ${browserInstanceLoader === 'fabric' ? 'selected' : ''}>fabric</option>
                                 <option value="forge" ${browserInstanceLoader === 'forge' ? 'selected' : ''}>forge</option>
                                 <option value="neoforge" ${browserInstanceLoader === 'neoforge' ? 'selected' : ''}>neoforge</option>
-                                <option value="vanilla" ${browserInstanceLoader === 'vanilla' ? 'selected' : ''}>vanilla</option>
+                                <option value="vanilla" ${browserInstanceLoader === 'vanilla' ? 'selected' : ''}>vanilla (no loader)</option>
                             </select>
                         </div>
                         <div style="margin-top: 16px;">
@@ -3926,8 +4217,30 @@
             }
         }
         
+        function updateBrowserVersionOverrideSelect() {
+            const selectEl = document.getElementById('browser-version-override');
+            const customEl = document.getElementById('browser-version-override-custom');
+            if (selectEl && customEl) {
+                if (selectEl.value === 'custom') {
+                    customEl.style.display = 'block';
+                    customEl.focus();
+                } else {
+                    customEl.style.display = 'none';
+                }
+            }
+        }
+
         function saveBrowserOverrides() {
-            browserInstanceVersion = document.getElementById('browser-version-override').value.trim() || '1.20.1';
+            const selectVer = document.getElementById('browser-version-override');
+            const customVerInput = document.getElementById('browser-version-override-custom');
+            let v = '1.20.1';
+            if (selectVer) {
+                v = selectVer.value;
+                if (v === 'custom' && customVerInput) {
+                    v = customVerInput.value.trim() || '1.20.1';
+                }
+            }
+            browserInstanceVersion = v;
             browserInstanceLoader = document.getElementById('browser-loader-override').value || 'fabric';
             fetchInstanceDataBrowser();
             alert("Metadata override settings saved successfully.");
