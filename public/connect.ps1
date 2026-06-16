@@ -28,6 +28,7 @@ if ($isInstalled) {
         "routes/worlds.js",
         "routes/mods.js",
         "routes/migrater.js",
+        "routes/backup.js",
         "utils/nbt.js",
         "utils/file.js",
         "utils/minecraft.js",
