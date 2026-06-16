@@ -32,6 +32,7 @@ app.use(require('./routes/instance'));
 app.use(require('./routes/worlds'));
 app.use(require('./routes/mods'));
 app.use(require('./routes/migrater'));
+app.use(require('./routes/backup'));
 
 // ==========================================
 // Start Web Companion Server

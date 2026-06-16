@@ -1195,6 +1195,9 @@
             <button class="tab-btn" role="tab" id="btn-worlds" onclick="switchTab('worlds')">
                 <i class="ti ti-world"></i> worlds_manager
             </button>
+            <button class="tab-btn" role="tab" id="btn-backup" onclick="switchTab('backup')">
+                <i class="ti ti-archive"></i> backup_restore
+            </button>
             <button class="tab-btn" role="tab" id="btn-settings" onclick="switchTab('settings')">
                 <i class="ti ti-settings"></i> settings
             </button>
@@ -1360,6 +1363,54 @@
                     <div class="card-header"><i class="ti ti-world"></i> saves directory worlds</div>
                     <div class="worlds-grid" id="worlds-grid-container">
                         <div style="color:var(--text-secondary); padding:20px;">no worlds loaded.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel: Backup & Restore -->
+            <div class="panel" id="panel-backup">
+                <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; align-items: start; width: 100%;">
+                    <!-- Left Column: Create Backup -->
+                    <div class="card" style="align-self: start;">
+                        <div class="card-header"><i class="ti ti-archive"></i> create instance backup</div>
+                        <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 8px;">
+                            Create a ZIP archive backup of the active Minecraft instance. Choose which directories to include:
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 6px;">
+                            <label class="check-row">
+                                <input type="checkbox" class="check-input" id="backup-opt-mods" checked>
+                                <span class="form-label" style="font-size: 12px; color: var(--text-primary);">mods folder</span>
+                            </label>
+                            <label class="check-row">
+                                <input type="checkbox" class="check-input" id="backup-opt-saves" checked>
+                                <span class="form-label" style="font-size: 12px; color: var(--text-primary);">saves (world folders)</span>
+                            </label>
+                            <label class="check-row">
+                                <input type="checkbox" class="check-input" id="backup-opt-config" checked>
+                                <span class="form-label" style="font-size: 12px; color: var(--text-primary);">configs & options.txt</span>
+                            </label>
+                            <label class="check-row">
+                                <input type="checkbox" class="check-input" id="backup-opt-resourcepacks" checked>
+                                <span class="form-label" style="font-size: 12px; color: var(--text-primary);">resourcepacks folder</span>
+                            </label>
+                            <label class="check-row">
+                                <input type="checkbox" class="check-input" id="backup-opt-shaders" checked>
+                                <span class="form-label" style="font-size: 12px; color: var(--text-primary);">shaderpacks folder</span>
+                            </label>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-primary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px;" onclick="createBackup()">
+                                <i class="ti ti-plus" style="font-size: 14px;"></i> initiate backup
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Saved Backups List -->
+                    <div class="card" style="flex: 1;">
+                        <div class="card-header"><i class="ti ti-history"></i> saved backups</div>
+                        <div id="backup-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 4px;">
+                            <div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1737,6 +1788,33 @@
             <div style="display:flex; justify-content:space-between; margin-top:8px;">
                 <button class="btn" onclick="closeDirBrowser()">cancel</button>
                 <button class="btn btn-primary" onclick="confirmDirBrowserSelection()">select this folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Restore Modal -->
+    <div class="overlay" id="confirm-restore-overlay" style="display: none; justify-content: center; align-items: center; z-index: 2500;">
+        <div class="progress-card" style="max-width: 440px; width: 100%; gap: 16px;">
+            <div style="font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: var(--warning); text-align: center;">
+                minestaller // confirm_restore
+            </div>
+            <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
+                Are you sure you want to restore <strong id="restore-filename-label" style="color: var(--accent);"></strong>?<br><br>
+                <span style="color: var(--warning); font-weight: bold;">Warning:</span> This will overwrite files in the active instance.
+                <div style="margin-top: 12px;">
+                    <label class="check-row">
+                        <input type="checkbox" class="check-input" id="restore-clear-first" checked>
+                        <span class="form-label" style="font-size: 12px; color: var(--text-primary);">Wipe existing folders before extracting (recommended)</span>
+                    </label>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button class="action-btn btn-secondary" style="flex: 1; font-weight: bold;" onclick="closeRestoreConfirmation()">
+                    cancel
+                </button>
+                <button class="action-btn btn-primary" id="btn-confirm-restore-run" style="flex: 1; font-weight: bold; background: var(--warning); border-color: var(--warning);" onclick="runRestoreBackup()">
+                    restore backup
+                </button>
             </div>
         </div>
     </div>
@@ -2527,14 +2605,18 @@
         // Module 3: Router Tab Controller
         // ==========================================
         function switchTab(tabId) {
-            const tabs = ['dash', 'mods', 'worlds', 'settings', 'porter'];
+            const tabs = ['dash', 'mods', 'worlds', 'settings', 'porter', 'backup'];
             tabs.forEach(t => {
-                document.getElementById(`btn-${t}`).classList.remove('active');
-                document.getElementById(`panel-${t}`).classList.remove('active');
+                const btn = document.getElementById(`btn-${t}`);
+                const panel = document.getElementById(`panel-${t}`);
+                if (btn) btn.classList.remove('active');
+                if (panel) panel.classList.remove('active');
             });
 
-            document.getElementById(`btn-${tabId}`).classList.add('active');
-            document.getElementById(`panel-${tabId}`).classList.add('active');
+            const activeBtn = document.getElementById(`btn-${tabId}`);
+            const activePanel = document.getElementById(`panel-${tabId}`);
+            if (activeBtn) activeBtn.classList.add('active');
+            if (activePanel) activePanel.classList.add('active');
 
             if (tabId === 'worlds' && config.lastMinecraftDir) {
                 loadWorlds(config.lastMinecraftDir);
@@ -2544,6 +2626,9 @@
             }
             if (tabId === 'settings') {
                 loadCompanionIPs();
+            }
+            if (tabId === 'backup') {
+                loadBackups();
             }
             closeContextPane();
         }
@@ -2722,6 +2807,176 @@
             }
             selectProject(selectedProject.project_id);
             updateQueueFooter();
+        }
+
+        // ==========================================
+        // Module 4.5: Backup & Restore Controller
+        // ==========================================
+        let selectedBackupFile = null;
+
+        async function loadBackups() {
+            if (!currentInstancePath) return;
+            const container = document.getElementById('backup-list-container');
+            try {
+                const res = await fetch(`/api/backup/list?instancePath=${encodeURIComponent(currentInstancePath)}`);
+                const backups = await res.json();
+                
+                if (backups.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>';
+                    return;
+                }
+                
+                container.innerHTML = backups.map(b => {
+                    const date = new Date(b.createdAt).toLocaleString();
+                    return `
+                        <div class="list-row" style="background: var(--bg-base); border: 1px solid var(--border-sub); padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1;">
+                                <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary);" title="${b.filename}">
+                                    ${b.filename}
+                                </div>
+                                <div style="font-size: 10px; color: var(--text-dim); display: flex; gap: 8px; align-items: center;">
+                                    <span>${date}</span>
+                                    <span style="color: var(--accent); font-weight: bold;">${b.sizeMB} MB</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                                <button class="btn" style="padding: 4px 8px; font-size: 11px; color: var(--warning); border-color: rgba(245, 158, 11, 0.3);" onclick="confirmRestoreBackup('${b.filename}')">
+                                    <i class="ti ti-history"></i> restore
+                                </button>
+                                <button class="btn" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" onclick="deleteBackup('${b.filename}')">
+                                    <i class="ti ti-trash"></i> delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Failed to load backups", err);
+                container.innerHTML = `<div style="color: #ef4444; padding:20px; text-align: center;">Error: ${err.message}</div>`;
+            }
+        }
+
+        async function createBackup() {
+            if (!currentInstancePath) {
+                alert("No active Minecraft instance selected!");
+                return;
+            }
+            
+            const options = {
+                mods: document.getElementById('backup-opt-mods').checked,
+                saves: document.getElementById('backup-opt-saves').checked,
+                config: document.getElementById('backup-opt-config').checked,
+                resourcepacks: document.getElementById('backup-opt-resourcepacks').checked,
+                shaders: document.getElementById('backup-opt-shaders').checked
+            };
+            
+            if (!Object.values(options).some(Boolean)) {
+                alert("Please select at least one component to backup!");
+                return;
+            }
+
+            const container = document.getElementById('backup-list-container');
+            container.innerHTML = '<div style="color:var(--accent); padding:20px; text-align: center;"><span style="animation: pulse 1s infinite;">●</span> creating ZIP backup... this may take a moment...</div>';
+
+            try {
+                const res = await fetch('/api/backup/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath: currentInstancePath, options })
+                });
+                
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                
+                alert(`Backup successfully created!\nSaved as: ${data.filename}\nSize: ${data.sizeMB} MB`);
+                loadBackups();
+            } catch (err) {
+                alert("Failed to create backup: " + err.message);
+                loadBackups();
+            }
+        }
+
+        function confirmRestoreBackup(filename) {
+            selectedBackupFile = filename;
+            document.getElementById('restore-filename-label').textContent = filename;
+            document.getElementById('restore-clear-first').checked = true;
+            document.getElementById('confirm-restore-overlay').style.display = 'flex';
+        }
+
+        function closeRestoreConfirmation() {
+            document.getElementById('confirm-restore-overlay').style.display = 'none';
+            selectedBackupFile = null;
+        }
+
+        async function runRestoreBackup() {
+            if (!selectedBackupFile || !currentInstancePath) return;
+            const clearFirst = document.getElementById('restore-clear-first').checked;
+
+            document.getElementById('confirm-restore-overlay').style.display = 'none';
+            
+            const progressOverlay = document.getElementById('overlay');
+            const phaseLabel = document.getElementById('progress-phase-label');
+            const fillBar = document.getElementById('progress-fill-bar');
+            const textPct = document.getElementById('progress-text-pct');
+            const consoleLogs = document.getElementById('progress-console-logs');
+            const btnCancel = document.getElementById('btn-cancel-install');
+            const btnClose = document.getElementById('btn-close-progress');
+
+            progressOverlay.style.display = 'flex';
+            phaseLabel.textContent = "restoring instance from backup...";
+            fillBar.style.width = '30%';
+            textPct.textContent = '30%';
+            consoleLogs.innerHTML = `<div style="color: var(--warning);">[INIT] Restoring backup archive: ${selectedBackupFile}</div>`;
+            consoleLogs.innerHTML += `<div>[RESTORE] Clearing folders: ${clearFirst}</div>`;
+            btnCancel.style.display = 'none';
+            btnClose.disabled = true;
+
+            try {
+                const res = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instancePath: currentInstancePath,
+                        backupFile: selectedBackupFile,
+                        clearFirst
+                    })
+                });
+
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                fillBar.style.width = '100%';
+                textPct.textContent = '100%';
+                consoleLogs.innerHTML += `<div style="color: var(--success);">[SUCCESS] Backup successfully restored over active instance!</div>`;
+                btnClose.disabled = false;
+                
+                await fetchInstanceData();
+            } catch (err) {
+                fillBar.style.width = '100%';
+                textPct.textContent = 'ERROR';
+                consoleLogs.innerHTML += `<div style="color: #ef4444;">[ERROR] Failed to restore backup: ${err.message}</div>`;
+                btnClose.disabled = false;
+            } finally {
+                selectedBackupFile = null;
+            }
+        }
+
+        async function deleteBackup(filename) {
+            if (!confirm(`Are you sure you want to permanently delete the backup: ${filename}?`)) return;
+            try {
+                const res = await fetch('/api/backup/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ instancePath: currentInstancePath, backupFile: filename })
+                });
+
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+
+                loadBackups();
+            } catch (err) {
+                alert("Failed to delete backup: " + err.message);
+            }
         }
 
         // ==========================================
