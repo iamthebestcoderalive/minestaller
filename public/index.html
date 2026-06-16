@@ -1156,6 +1156,7 @@
             opacity: 1 !important;
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -1348,6 +1349,19 @@
                             <option value="datapack">datapacks</option>
                         </select>
                         <button class="btn btn-primary" onclick="performSearch()">search</button>
+                    </div>
+                    <div id="offline-selectors-row" style="display: none; margin-top: 12px; gap: 12px; align-items: center; font-size: 12px; font-family: var(--font-sans);">
+                        <span style="color: var(--text-secondary);">Minecraft Version:</span>
+                        <input type="text" class="text-input" id="search-version-filter" style="width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" value="1.20.1" onchange="updateSearchFilters()">
+                        
+                        <span style="color: var(--text-secondary); margin-left: 8px;">Loader:</span>
+                        <select class="select-input" id="search-loader-filter" style="width: 120px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" onchange="updateSearchFilters()">
+                            <option value="fabric">fabric</option>
+                            <option value="forge">forge</option>
+                            <option value="neoforge">neoforge</option>
+                            <option value="quilt">quilt</option>
+                            <option value="vanilla">vanilla</option>
+                        </select>
                     </div>
                 </div>
 
@@ -2469,6 +2483,22 @@
             }
         }
 
+        function updateSearchFilters() {
+            const v = document.getElementById('search-version-filter').value.trim();
+            const l = document.getElementById('search-loader-filter').value;
+            if (v) {
+                browserInstanceVersion = v;
+                document.getElementById('status-version').textContent = v;
+                const statVerEl = document.getElementById('stat-version');
+                if (statVerEl) statVerEl.textContent = v;
+            }
+            if (l) {
+                browserInstanceLoader = l;
+                document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">${l}</span>`;
+            }
+            performSearch();
+        }
+
         // ==========================================
         // Client-Side Browser Direct File System Handlers
         // ==========================================
@@ -2532,13 +2562,16 @@
                 agentPollInterval = null;
             }
             
+            browserInstanceVersion = "1.20.1";
+            browserInstanceLoader = "fabric";
+
             document.getElementById('status-dir').innerHTML = `<span style="color:var(--warning); font-weight:bold;">Offline / Demo Mode</span>`;
-            document.getElementById('status-version').textContent = "Demo";
-            document.getElementById('status-loader').innerHTML = `<span style="color:var(--text-secondary);">None</span>`;
+            document.getElementById('status-version').textContent = "1.20.1";
+            document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">fabric</span>`;
             document.getElementById('status-state').innerHTML = `<span style="color:var(--warning);">● standalone</span>`;
             document.getElementById('sidebar-active-instance').textContent = "Demo Mode";
             
-            document.getElementById('stat-version').textContent = "Demo";
+            document.getElementById('stat-version').textContent = "1.20.1";
             document.getElementById('stat-mods').textContent = "0";
             document.getElementById('stat-resourcepacks').textContent = "0";
             document.getElementById('stat-resourcepacks-active').textContent = "0 active";
@@ -2563,6 +2596,14 @@
             footDot.className = 'footer-dot green';
             footConn.textContent = 'Modrinth online';
             document.getElementById('footer-queue').textContent = `${cart.length} queued · Standalone`;
+
+            // Show selectors row and sync values
+            const selRow = document.getElementById('offline-selectors-row');
+            if (selRow) selRow.style.display = 'flex';
+            const verFilt = document.getElementById('search-version-filter');
+            if (verFilt) verFilt.value = "1.20.1";
+            const loadFilt = document.getElementById('search-loader-filter');
+            if (loadFilt) loadFilt.value = "fabric";
         }
 
         async function detectMcVersionBrowser() {
@@ -2687,6 +2728,14 @@
             footDot.className = 'footer-dot green';
             footConn.textContent = 'Modrinth online';
             document.getElementById('footer-queue').textContent = `${cart.length} queued · Browser Direct`;
+
+            // Show selectors row and sync values
+            const selRow = document.getElementById('offline-selectors-row');
+            if (selRow) selRow.style.display = 'flex';
+            const verFilt = document.getElementById('search-version-filter');
+            if (verFilt) verFilt.value = browserInstanceVersion;
+            const loadFilt = document.getElementById('search-loader-filter');
+            if (loadFilt) loadFilt.value = browserInstanceLoader;
         }
 
         // Path truncation helper (show only last folder name)
@@ -3893,13 +3942,77 @@
             document.body.removeChild(a);
         }
 
-        function installTasksOffline(tasks) {
-            alert(`Downloading ${tasks.length} file(s) via your browser. Please save them to your Minecraft folders manually:\n` + 
-                  tasks.map(t => `- ${t.filename} (place in: ${t.type === 'shader' ? 'shaderpacks' : t.type === 'datapack' ? 'saves/<world>/datapacks' : t.type + 's'})`).join('\n'));
-                  
-            tasks.forEach(task => {
-                triggerDownload(task.url, task.filename);
-            });
+        async function installTasksOffline(tasks) {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('btn-cancel-install').disabled = true;
+            document.getElementById('btn-close-progress').disabled = true;
+            document.getElementById('progress-fill-bar').style.width = '0%';
+            document.getElementById('progress-text-pct').textContent = '0%';
+            document.getElementById('progress-phase-label').textContent = 'step: preparing ZIP package';
+            
+            const consoleLogs = document.getElementById('progress-console-logs');
+            consoleLogs.innerHTML = '';
+
+            function log(msg) {
+                consoleLogs.innerHTML += `<div>${msg}</div>`;
+                consoleLogs.scrollTop = consoleLogs.scrollHeight;
+            }
+
+            try {
+                const zip = new JSZip();
+                let count = 0;
+                
+                for (const task of tasks) {
+                    log(`[DOWNLOAD] Fetching: ${task.filename}...`);
+                    const res = await fetch(task.downloadUrl);
+                    if (!res.ok) throw new Error(`Failed to download ${task.filename}: ${res.statusText}`);
+                    
+                    const arrayBuffer = await res.arrayBuffer();
+                    
+                    let zipPath = task.filename;
+                    if (task.targetFolder) {
+                        zipPath = `${task.targetFolder}/${task.filename}`;
+                    } else {
+                        if (task.filename.endsWith('.mrpack')) {
+                            zipPath = `modpacks/${task.filename}`;
+                        } else {
+                            zipPath = `mods/${task.filename}`;
+                        }
+                    }
+                    
+                    log(`[ZIP] Packaging: ${zipPath}`);
+                    zip.file(zipPath, arrayBuffer);
+                    
+                    count++;
+                    const pct = Math.round((count / tasks.length) * 85);
+                    document.getElementById('progress-fill-bar').style.width = `${pct}%`;
+                    document.getElementById('progress-text-pct').textContent = `${pct}%`;
+                }
+                
+                log(`[ZIP] Generating ZIP package...`);
+                document.getElementById('progress-phase-label').textContent = 'step: building ZIP archive';
+                
+                const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
+                    const pct = Math.round(85 + (metadata.percent * 0.15));
+                    document.getElementById('progress-fill-bar').style.width = `${pct}%`;
+                    document.getElementById('progress-text-pct').textContent = `${pct}%`;
+                });
+                
+                log(`[SUCCESS] ZIP compiled successfully!`);
+                const downloadUrl = URL.createObjectURL(blob);
+                triggerDownload(downloadUrl, 'minestaller_addons.zip');
+                URL.revokeObjectURL(downloadUrl);
+                
+                document.getElementById('progress-phase-label').textContent = 'step: download completed';
+                document.getElementById('progress-fill-bar').style.width = '100%';
+                document.getElementById('progress-text-pct').textContent = '100%';
+                log(`[SUCCESS] ZIP download started. Please extract it inside your Minecraft directory!`);
+                document.getElementById('btn-close-progress').disabled = false;
+            } catch (err) {
+                log(`[ERROR] Packaging failed: ${err.message}`);
+                document.getElementById('progress-phase-label').textContent = 'step: compilation failed';
+                document.getElementById('btn-close-progress').disabled = false;
+            }
         }
 
         async function installTasksBrowser(tasks) {
@@ -3922,22 +4035,22 @@
                 let count = 0;
                 for (const task of tasks) {
                     log(`[DOWNLOAD] Fetching: ${task.filename}...`);
-                    const res = await fetch(task.url);
+                    const res = await fetch(task.downloadUrl);
                     if (!res.ok) throw new Error(`Failed to download ${task.filename}: ${res.statusText}`);
                     
                     const arrayBuffer = await res.arrayBuffer();
-                    log(`[WRITE] Saving ${task.filename} to ${task.type}s/...`);
+                    log(`[WRITE] Saving ${task.filename} to ${task.targetFolder || 'mods'}/...`);
                     
                     let parentHandle = localMinecraftDirHandle;
-                    let folderName = task.type + 's';
-                    if (task.type === 'shader') folderName = 'shaderpacks';
-                    
-                    if (task.type === 'datapack') {
-                        const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves', { create: true });
-                        const worldHandle = await savesHandle.getDirectoryHandle(task.worldName, { create: true });
-                        parentHandle = await worldHandle.getDirectoryHandle('datapacks', { create: true });
+                    if (task.targetFolder) {
+                        const pathParts = task.targetFolder.split('/');
+                        for (const part of pathParts) {
+                            if (part) {
+                                parentHandle = await parentHandle.getDirectoryHandle(part, { create: true });
+                            }
+                        }
                     } else {
-                        parentHandle = await localMinecraftDirHandle.getDirectoryHandle(folderName, { create: true });
+                        parentHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: true });
                     }
                     
                     const fileHandle = await parentHandle.getFileHandle(task.filename, { create: true });
