@@ -1710,7 +1710,7 @@
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
                 <strong style="color:var(--text-primary);">Select your connection method:</strong><br><br>
                 • <strong>Use Agent (Recommended)</strong>: Connects via a lightweight local companion. Best for standard installations, as it bypasses browser sandbox blocks on default folders like AppData.<br><br>
-                • <strong>Connect Folder (No Agent)</strong>: Links a directory directly. <em>Note: Browsers block selecting the default AppData/Roaming/.minecraft folder directly due to security rules. Use this option if your instance is in a custom location (e.g. Prism Launcher, CurseForge, Desktop).</em>
+                • <strong>Connect Folder (No Agent)</strong>: Links a directory directly. <em>Note: Browsers block selecting folders inside AppData (used by the standard launcher and Modrinth App) due to security rules. Use this option if your game directory is set to a custom folder outside AppData (e.g. in Documents, Desktop, or another drive).</em>
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionContinueStartup()">
@@ -1735,7 +1735,7 @@
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 16px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
                 <strong style="color:var(--text-primary);">Helper agent is offline.</strong><br><br>
                 • <strong>Connect Agent (Recommended)</strong> to manage your default Minecraft path without browser sandbox blocks.<br><br>
-                • Alternatively, select a custom Minecraft directory outside AppData (e.g., Prism Launcher, CurseForge, or a folder on your Desktop/Documents) using the browser direct connection, or run in Offline Mode.
+                • Alternatively, select a custom Minecraft directory outside AppData (e.g., in Documents, Desktop, or a custom launcher profile folder) using the browser direct connection, or run in Offline Mode.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="openConnectDeviceModal()">
