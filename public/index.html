@@ -1703,12 +1703,14 @@
 
     <!-- Startup Welcome Screen Overlay -->
     <div class="overlay" id="startup-welcome-screen" style="display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 3000;">
-        <div class="progress-card" style="max-width: 460px; width: 100%; text-align: center; gap: 20px; padding: 24px;">
+        <div class="progress-card" style="max-width: 480px; width: 100%; text-align: center; gap: 20px; padding: 24px;">
             <div style="font-family: var(--font-mono); font-size: 18px; font-weight: bold; color: var(--accent);">
                 minestaller // welcome
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
-                To manage your Minecraft installations, Minestaller can use a helper agent running locally, or connect your folder directly through the browser (if using Chrome/Edge/Safari/Opera).
+                <strong style="color:var(--text-primary);">Select your connection method:</strong><br><br>
+                • <strong>Use Agent (Recommended)</strong>: Connects via a lightweight local companion. Best for standard installations, as it bypasses browser sandbox blocks on default folders like AppData.<br><br>
+                • <strong>Connect Folder (No Agent)</strong>: Links a directory directly. <em>Note: Browsers block selecting the default AppData/Roaming/.minecraft folder directly due to security rules. Use this option if your instance is in a custom location (e.g. Prism Launcher, CurseForge, Desktop).</em>
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionContinueStartup()">
@@ -1726,12 +1728,14 @@
 
     <!-- Setup Blocker Overlay -->
     <div class="overlay" id="agent-setup-overlay" style="display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 2000;">
-        <div class="progress-card" style="max-width: 440px; width: 100%; text-align: center; gap: 16px;">
+        <div class="progress-card" style="max-width: 480px; width: 100%; text-align: center; gap: 16px;">
             <div style="font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: var(--warning);">
                 minestaller // agent_offline
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 16px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
-                Minestaller requires a local connection helper agent. Alternatively, you can select your Minecraft folder directly in your browser or run in standalone mode.
+                <strong style="color:var(--text-primary);">Helper agent is offline.</strong><br><br>
+                • <strong>Connect Agent (Recommended)</strong> to manage your default Minecraft path without browser sandbox blocks.<br><br>
+                • Alternatively, select a custom Minecraft directory outside AppData (e.g., Prism Launcher, CurseForge, or a folder on your Desktop/Documents) using the browser direct connection, or run in Offline Mode.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="openConnectDeviceModal()">
