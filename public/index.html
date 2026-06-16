@@ -1408,6 +1408,9 @@
                     <!-- Right Column: Saved Backups List -->
                     <div class="card" style="flex: 1;">
                         <div class="card-header"><i class="ti ti-history"></i> saved backups</div>
+                        <div style="font-family: var(--font-mono); font-size: 10px; color: var(--text-dim); margin-bottom: 4px; word-break: break-all; background: var(--bg-base); padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-sub);">
+                            backup folder: <span id="backup-path-display" style="color: var(--accent); font-weight: bold;">loading...</span>
+                        </div>
                         <div id="backup-list-container" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; padding-right: 4px;">
                             <div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>
                         </div>
@@ -2819,7 +2822,14 @@
             const container = document.getElementById('backup-list-container');
             try {
                 const res = await fetch(`/api/backup/list?instancePath=${encodeURIComponent(currentInstancePath)}`);
-                const backups = await res.json();
+                const data = await res.json();
+                const backups = data.backups || [];
+                const backupsDir = data.backupsDir || "";
+                
+                const pathDisplay = document.getElementById('backup-path-display');
+                if (pathDisplay) {
+                    pathDisplay.textContent = backupsDir;
+                }
                 
                 if (backups.length === 0) {
                     container.innerHTML = '<div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>';

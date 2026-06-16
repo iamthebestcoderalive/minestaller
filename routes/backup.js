@@ -101,9 +101,9 @@ router.get('/api/backup/list', (req, res) => {
             return res.status(400).json({ error: "Invalid instance path" });
         }
 
-        const backupsDir = path.join(path.dirname(instancePath), 'minestaller_backups');
+        const backupsDir = path.resolve(path.dirname(instancePath), 'minestaller_backups');
         if (!fs.existsSync(backupsDir)) {
-            return res.json([]);
+            return res.json({ backupsDir, backups: [] });
         }
 
         const files = fs.readdirSync(backupsDir);
@@ -124,7 +124,7 @@ router.get('/api/backup/list', (req, res) => {
         // Sort by newest first
         backups.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        res.json(backups);
+        res.json({ backupsDir, backups });
     } catch (e) {
         res.status(500).json({ error: "Failed to list backups: " + e.message });
     }
