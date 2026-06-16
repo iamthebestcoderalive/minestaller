@@ -37,6 +37,9 @@ Minestaller is a retro-futuristic Minecraft management platform. It consists of:
 4. **"Connect With Device" Setup Wizard**:
    - Interactive pop-up tutorial providing custom batch, bash, and powershell setup scripts.
    - Info tooltips explaining the function of each command (e.g. directory changes, server boots, fallback repositories).
+5. **Bloxy Theme**:
+   - This theme is inspired by the Bloxy Cola (From Roblox).
+   - Looks cool in my opinion.
 
 ---
 
