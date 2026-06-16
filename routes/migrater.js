@@ -76,7 +76,7 @@ router.get('/api/detect-instances', (req, res) => {
             try {
                 fs.readdirSync(instancesDir).forEach(f => {
                     const full = path.join(instancesDir, f);
-                    if (fs.statSync(full).isDirectory()) {
+                    if (fs.statSync(full).isDirectory() && f.toLowerCase() !== 'minestaller_backups') {
                         if (!detected.some(d => d.path.toLowerCase() === full.toLowerCase())) {
                             detected.push({ name: f, path: full, launcher: "Minecraft Instances" });
                         }
