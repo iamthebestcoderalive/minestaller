@@ -682,6 +682,14 @@
             background: var(--warning);
             color: var(--bg-base);
         }
+        .btn-danger {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+        .btn-danger:hover {
+            background: #ef4444;
+            color: var(--text-primary);
+        }
         .overlay {
             position: absolute;
             top: 0;
@@ -1700,14 +1708,17 @@
                 minestaller // welcome
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
-                To manage your Minecraft installations, Minestaller requires a helper agent running locally on your computer. Please choose an option to proceed:
+                To manage your Minecraft installations, Minestaller can use a helper agent running locally, or connect your folder directly through the browser (if using Chrome/Edge/Safari/Opera).
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionContinueStartup()">
-                    Continue
+                    Continue (Use Agent)
                 </button>
-                <button class="action-btn btn-secondary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionInstallRequiredAgent()">
-                    Connect With Device
+                <button class="action-btn btn-secondary" id="btn-welcome-browser-direct" style="width: 100%; font-weight: bold; text-transform: none;" onclick="selectLocalFolderDirect()">
+                    Connect Folder via Browser (No Agent)
+                </button>
+                <button class="action-btn btn-secondary" style="width: 100%; font-weight: none; text-transform: none; border-color: transparent; color: var(--text-secondary);" onclick="enableOfflineMode()">
+                    Browse Catalog (Demo / Offline Mode)
                 </button>
             </div>
         </div>
@@ -1720,12 +1731,17 @@
                 minestaller // agent_offline
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 16px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
-                To use the dashboard, Minestaller requires a connection helper agent running locally on your computer.<br><br>
-                Please connect your device to proceed.
+                Minestaller requires a local connection helper agent. Alternatively, you can select your Minecraft folder directly in your browser or run in standalone mode.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="openConnectDeviceModal()">
-                    <i class="ti ti-device-laptop" style="margin-right: 6px;"></i> Connect With Device
+                    <i class="ti ti-device-laptop" style="margin-right: 6px;"></i> Connect With Device (Agent)
+                </button>
+                <button class="action-btn btn-secondary" id="btn-setup-browser-direct" style="width: 100%; font-weight: bold; text-transform: none;" onclick="selectLocalFolderDirect()">
+                    Connect Folder via Browser (No Agent)
+                </button>
+                <button class="action-btn btn-secondary" style="width: 100%; font-weight: none; text-transform: none; border-color: transparent; color: var(--text-secondary);" onclick="enableOfflineMode()">
+                    Browse Catalog (Demo / Offline Mode)
                 </button>
             </div>
             <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;">
@@ -1822,6 +1838,27 @@
         </div>
     </div>
 
+    <!-- Confirm Delete World Modal -->
+    <div class="overlay" id="confirm-delete-world-overlay" style="display: none; justify-content: center; align-items: center; z-index: 2500;">
+        <div class="progress-card" style="max-width: 440px; width: 100%; gap: 16px;">
+            <div style="font-family: var(--font-mono); font-size: 16px; font-weight: bold; color: #ef4444; text-align: center;">
+                minestaller // delete_world
+            </div>
+            <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
+                Are you sure you want to permanently delete the world <strong id="delete-world-label" style="color: var(--accent);"></strong>?<br><br>
+                <span style="color: #ef4444; font-weight: bold;">Warning:</span> This action is permanent and cannot be undone. All save files for this world will be lost forever.
+            </div>
+            <div style="display: flex; gap: 12px; width: 100%;">
+                <button class="action-btn btn-secondary" style="flex: 1; font-weight: bold;" onclick="closeDeleteWorldConfirmation()">
+                    cancel
+                </button>
+                <button class="action-btn btn-primary" id="btn-confirm-delete-world-run" style="flex: 1; font-weight: bold; background: #ef4444; border-color: #ef4444;" onclick="runDeleteWorld()">
+                    delete permanently
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Full Progress Overlay -->
     <div class="overlay" id="overlay">
         <div class="progress-card">
@@ -1851,6 +1888,123 @@
             }
             return originalFetch(input, init);
         };
+
+        // ==========================================
+        // Client-Side NBT Binary Engine (BrowserDirect)
+        // ==========================================
+        class BrowserNbtReader {
+            constructor(arrayBuffer) {
+                this.view = new DataView(arrayBuffer);
+                this.offset = 0;
+            }
+            readByte() {
+                const val = this.view.getInt8(this.offset);
+                this.offset += 1;
+                return val;
+            }
+            readShort() {
+                const val = this.view.getInt16(this.offset, false);
+                this.offset += 2;
+                return val;
+            }
+            readInt() {
+                const val = this.view.getInt32(this.offset, false);
+                this.offset += 4;
+                return val;
+            }
+            readLong() {
+                const high = this.view.getInt32(this.offset, false);
+                const low = this.view.getInt32(this.offset + 4, false);
+                this.offset += 8;
+                return high * 4294967296 + (low >>> 0);
+            }
+            readFloat() {
+                const val = this.view.getFloat32(this.offset, false);
+                this.offset += 4;
+                return val;
+            }
+            readDouble() {
+                const val = this.view.getFloat64(this.offset, false);
+                this.offset += 8;
+                return val;
+            }
+            readString() {
+                const len = this.readShort();
+                const decoder = new TextDecoder('utf-8');
+                const str = decoder.decode(new Uint8Array(this.view.buffer, this.offset, len));
+                this.offset += len;
+                return str;
+            }
+            readTagPayload(type) {
+                switch (type) {
+                    case 0: return null;
+                    case 1: return this.readByte();
+                    case 2: return this.readShort();
+                    case 3: return this.readInt();
+                    case 4: return this.readLong();
+                    case 5: return this.readFloat();
+                    case 6: return this.readDouble();
+                    case 7: {
+                        const len = this.readInt();
+                        const arr = new Uint8Array(this.view.buffer, this.offset, len);
+                        this.offset += len;
+                        return arr;
+                    }
+                    case 8: return this.readString();
+                    case 9: {
+                        const subType = this.readByte();
+                        const len = this.readInt();
+                        const list = [];
+                        for (let i = 0; i < len; i++) {
+                            list.push(this.readTagPayload(subType));
+                        }
+                        return { type: subType, value: list };
+                    }
+                    case 10: {
+                        const compound = {};
+                        while (true) {
+                            const subType = this.readByte();
+                            if (subType === 0) break;
+                            const name = this.readString();
+                            compound[name] = { type: subType, value: this.readTagPayload(subType) };
+                        }
+                        return compound;
+                    }
+                    case 11: {
+                        const len = this.readInt();
+                        const arr = [];
+                        for (let i = 0; i < len; i++) {
+                            arr.push(this.readInt());
+                        }
+                        return arr;
+                    }
+                    case 12: {
+                        const len = this.readInt();
+                        const arr = [];
+                        for (let i = 0; i < len; i++) {
+                            arr.push(this.readLong());
+                        }
+                        return arr;
+                    }
+                    default:
+                        throw new Error("Unknown NBT tag type: " + type);
+                }
+            }
+            readRoot() {
+                const type = this.readByte();
+                if (type !== 10) {
+                    throw new Error("Expected root Compound tag, got " + type);
+                }
+                const name = this.readString();
+                const value = this.readTagPayload(10);
+                return { name, type, value };
+            }
+        }
+
+        function parseBrowserNBT(arrayBuffer) {
+            const reader = new BrowserNbtReader(arrayBuffer);
+            return reader.readRoot();
+        }
 
         async function downloadAgentZip() {
             try {
@@ -1978,6 +2132,15 @@
         }
 
         let config = { lastMinecraftDir: "", instances: {} };
+
+        let localMinecraftDirHandle = null;
+        let isBrowserFsMode = false;
+        let isOfflineMode = false;
+        let originalSettingsPanelHtml = '';
+        let browserInstanceVersion = "1.20.1";
+        let browserInstanceLoader = "fabric";
+        let worldToDeleteDirName = '';
+        let worldToDeleteLevelName = '';
 
         let currentInstancePath = "";
         let worlds = [];
@@ -2302,6 +2465,226 @@
             }
         }
 
+        // ==========================================
+        // Client-Side Browser Direct File System Handlers
+        // ==========================================
+        async function selectLocalFolderDirect() {
+            try {
+                if (!window.showDirectoryPicker) {
+                    alert("Your browser does not support the File System Access API. Please use a Chromium-based browser like Chrome, Edge, or Opera to connect directly, or use the helper agent.");
+                    return;
+                }
+                
+                const handle = await window.showDirectoryPicker({
+                    mode: 'readwrite'
+                });
+                
+                let hasMods = false;
+                let hasSaves = false;
+                for await (const entry of handle.values()) {
+                    if (entry.kind === 'directory') {
+                        if (entry.name === 'mods') hasMods = true;
+                        if (entry.name === 'saves') hasSaves = true;
+                    }
+                }
+                
+                if (!hasMods && !hasSaves) {
+                    if (!confirm("This folder does not appear to contain 'mods' or 'saves' subfolders. Are you sure this is your Minecraft directory?")) {
+                        return;
+                    }
+                }
+                
+                localMinecraftDirHandle = handle;
+                isBrowserFsMode = true;
+                isOfflineMode = false;
+                
+                document.getElementById('startup-welcome-screen').style.display = 'none';
+                document.getElementById('agent-setup-overlay').style.display = 'none';
+                hideInstanceSetupBlocker();
+                
+                if (agentPollInterval) {
+                    clearInterval(agentPollInterval);
+                    agentPollInterval = null;
+                }
+                
+                await fetchInstanceDataBrowser();
+                
+            } catch (e) {
+                console.error("Directory selection cancelled or failed", e);
+            }
+        }
+
+        function enableOfflineMode() {
+            isOfflineMode = true;
+            isBrowserFsMode = false;
+            localMinecraftDirHandle = null;
+            
+            document.getElementById('startup-welcome-screen').style.display = 'none';
+            document.getElementById('agent-setup-overlay').style.display = 'none';
+            hideInstanceSetupBlocker();
+            
+            if (agentPollInterval) {
+                clearInterval(agentPollInterval);
+                agentPollInterval = null;
+            }
+            
+            document.getElementById('status-dir').innerHTML = `<span style="color:var(--warning); font-weight:bold;">Offline / Demo Mode</span>`;
+            document.getElementById('status-version').textContent = "Demo";
+            document.getElementById('status-loader').innerHTML = `<span style="color:var(--text-secondary);">None</span>`;
+            document.getElementById('status-state').innerHTML = `<span style="color:var(--warning);">● standalone</span>`;
+            document.getElementById('sidebar-active-instance').textContent = "Demo Mode";
+            
+            document.getElementById('stat-version').textContent = "Demo";
+            document.getElementById('stat-mods').textContent = "0";
+            document.getElementById('stat-resourcepacks').textContent = "0";
+            document.getElementById('stat-resourcepacks-active').textContent = "0 active";
+            document.getElementById('stat-shaders').textContent = "0";
+            document.getElementById('stat-shaders-active').textContent = "0 active";
+            
+            const rpList = document.getElementById('dash-resourcepacks-list');
+            if (rpList) rpList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">Connect your folder to manage resourcepacks.</div>';
+            const shList = document.getElementById('dash-shaders-list');
+            if (shList) shList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">Connect your folder to manage shaders.</div>';
+            
+            const mpContainer = document.getElementById('dash-modpack-container');
+            if (mpContainer) mpContainer.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">Running in catalog browser mode.</div>';
+            
+            document.getElementById('profile-java').textContent = 'N/A';
+            document.getElementById('profile-ram').textContent = 'N/A';
+            document.getElementById('profile-worlds').textContent = '0';
+            document.getElementById('profile-size').textContent = 'N/A';
+
+            const footDot = document.getElementById('footer-dot-connection');
+            const footConn = document.getElementById('footer-connection');
+            footDot.className = 'footer-dot green';
+            footConn.textContent = 'Modrinth online';
+            document.getElementById('footer-queue').textContent = `${cart.length} queued · Standalone`;
+        }
+
+        async function detectMcVersionBrowser() {
+            try {
+                const lpHandle = await localMinecraftDirHandle.getFileHandle('launcher_profiles.json', { create: false });
+                const file = await lpHandle.getFile();
+                const text = await file.text();
+                const data = JSON.parse(text);
+                if (data.profiles) {
+                    for (const p of Object.values(data.profiles)) {
+                        if (p.lastVersionId && /^\d+\.\d+(\.\d+)?$/.test(p.lastVersionId)) {
+                            return p.lastVersionId;
+                        }
+                    }
+                }
+            } catch (err) {}
+            
+            try {
+                const versionsHandle = await localMinecraftDirHandle.getDirectoryHandle('versions', { create: false });
+                const versions = [];
+                for await (const entry of versionsHandle.values()) {
+                    if (entry.kind === 'directory' && /^\d+\.\d+(\.\d+)?$/.test(entry.name)) {
+                        versions.push(entry.name);
+                    }
+                }
+                if (versions.length > 0) {
+                    versions.sort((a, b) => {
+                        const partsA = a.split('.').map(Number);
+                        const partsB = b.split('.').map(Number);
+                        for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
+                            const valA = partsA[i] || 0;
+                            const valB = partsB[i] || 0;
+                            if (valA !== valB) return valB - valA;
+                        }
+                        return 0;
+                    });
+                    return versions[0];
+                }
+            } catch (err) {}
+            
+            return "1.20.1";
+        }
+
+        async function fetchInstanceDataBrowser() {
+            if (!localMinecraftDirHandle) return;
+            
+            let totalMods = 0;
+            try {
+                const modsHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: false });
+                for await (const entry of modsHandle.values()) {
+                    if (entry.kind === 'file' && entry.name.endsWith('.jar')) {
+                        totalMods++;
+                    }
+                }
+            } catch (err) {}
+
+            let totalWorlds = 0;
+            try {
+                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves', { create: false });
+                for await (const entry of savesHandle.values()) {
+                    if (entry.kind === 'directory') {
+                        totalWorlds++;
+                    }
+                }
+            } catch (err) {}
+
+            let totalRps = 0;
+            try {
+                const rpHandle = await localMinecraftDirHandle.getDirectoryHandle('resourcepacks', { create: false });
+                for await (const entry of rpHandle.values()) {
+                    totalRps++;
+                }
+            } catch (err) {}
+
+            let totalShaders = 0;
+            try {
+                const shaderHandle = await localMinecraftDirHandle.getDirectoryHandle('shaderpacks', { create: false });
+                for await (const entry of shaderHandle.values()) {
+                    totalShaders++;
+                }
+            } catch (err) {}
+
+            if (!browserInstanceVersion || browserInstanceVersion === "Unknown" || browserInstanceVersion === "--") {
+                browserInstanceVersion = await detectMcVersionBrowser();
+            }
+
+            document.getElementById('status-dir').innerHTML = `Direct: <span style="color:var(--accent); font-weight:bold;">${localMinecraftDirHandle.name}</span>`;
+            document.getElementById('status-version').textContent = browserInstanceVersion;
+            document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">${browserInstanceLoader}</span>`;
+            document.getElementById('status-state').innerHTML = `<span style="color:var(--success);">● ready (browser direct)</span>`;
+            document.getElementById('sidebar-active-instance').textContent = localMinecraftDirHandle.name;
+
+            document.getElementById('stat-version').textContent = browserInstanceVersion;
+            document.getElementById('stat-mods').textContent = totalMods;
+            document.getElementById('stat-resourcepacks').textContent = totalRps;
+            document.getElementById('stat-resourcepacks-active').textContent = `Local mode`;
+            document.getElementById('stat-shaders').textContent = totalShaders;
+            document.getElementById('stat-shaders-active').textContent = `Local mode`;
+
+            const rpList = document.getElementById('dash-resourcepacks-list');
+            if (rpList) rpList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-family:var(--font-mono); font-size:11px;">Resourcepacks managed directly in your folder.</div>';
+            const shList = document.getElementById('dash-shaders-list');
+            if (shList) shList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-family:var(--font-mono); font-size:11px;">Shaders managed directly in your folder.</div>';
+            
+            const mpContainer = document.getElementById('dash-modpack-container');
+            if (mpContainer) {
+                mpContainer.innerHTML = `
+                    <div class="modpack-card not-detected">
+                        <div class="modpack-icon" style="color: var(--text-dim);">⚗️</div>
+                        <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim);">Running in browser direct mode</span>
+                    </div>
+                `;
+            }
+
+            document.getElementById('profile-java').textContent = 'N/A';
+            document.getElementById('profile-ram').textContent = 'N/A';
+            document.getElementById('profile-worlds').textContent = totalWorlds;
+            document.getElementById('profile-size').textContent = 'N/A';
+
+            const footDot = document.getElementById('footer-dot-connection');
+            const footConn = document.getElementById('footer-connection');
+            footDot.className = 'footer-dot green';
+            footConn.textContent = 'Modrinth online';
+            document.getElementById('footer-queue').textContent = `${cart.length} queued · Browser Direct`;
+        }
+
         // Path truncation helper (show only last folder name)
         function truncatePath(fullPath) {
             if (!fullPath) return '--';
@@ -2333,6 +2716,55 @@
             }
             updateQueueFooter();
             loadCompanionIPs();
+
+            // Store original settings panel structure
+            const settingsPanel = document.getElementById('panel-settings');
+            if (settingsPanel) {
+                originalSettingsPanelHtml = settingsPanel.innerHTML;
+            }
+
+            // Hide browser direct buttons if not supported (e.g. Firefox)
+            if (!window.showDirectoryPicker) {
+                const welcomeDirectBtn = document.getElementById('btn-welcome-browser-direct');
+                if (welcomeDirectBtn) welcomeDirectBtn.style.display = 'none';
+                const setupDirectBtn = document.getElementById('btn-setup-browser-direct');
+                if (setupDirectBtn) setupDirectBtn.style.display = 'none';
+            }
+
+            // Allow click-to-override on version/loader in browser-direct or offline mode
+            const statusVerEl = document.getElementById('status-version');
+            if (statusVerEl) {
+                statusVerEl.style.cursor = 'pointer';
+                statusVerEl.addEventListener('click', () => {
+                    if (isBrowserFsMode || isOfflineMode) {
+                        const current = statusVerEl.textContent;
+                        const v = prompt("Enter Minecraft version (e.g. 1.20.1, 1.21):", current);
+                        if (v) {
+                            browserInstanceVersion = v;
+                            statusVerEl.textContent = v;
+                            const statVerEl = document.getElementById('stat-version');
+                            if (statVerEl) statVerEl.textContent = v;
+                            if (isBrowserFsMode) fetchInstanceDataBrowser();
+                        }
+                    }
+                });
+            }
+
+            const statusLoadEl = document.getElementById('status-loader');
+            if (statusLoadEl) {
+                statusLoadEl.style.cursor = 'pointer';
+                statusLoadEl.addEventListener('click', () => {
+                    if (isBrowserFsMode || isOfflineMode) {
+                        const current = statusLoadEl.textContent.trim();
+                        const l = prompt("Enter loader (fabric, forge, neoforge, vanilla):", current);
+                        if (l) {
+                            browserInstanceLoader = l.toLowerCase();
+                            statusLoadEl.innerHTML = `<span style="color:var(--accent);">${l.toLowerCase()}</span>`;
+                            if (isBrowserFsMode) fetchInstanceDataBrowser();
+                        }
+                    }
+                });
+            }
 
             // Try to auto-connect to the agent if it is already running
             try {
@@ -2383,6 +2815,13 @@
 
         // Fetch all instance details (Agent verify point)
         async function fetchInstanceData() {
+            if (isBrowserFsMode) {
+                await fetchInstanceDataBrowser();
+                return;
+            }
+            if (isOfflineMode) {
+                return;
+            }
             try {
                 const res = await fetch('/api/instance');
                 
@@ -2621,17 +3060,48 @@
             if (activeBtn) activeBtn.classList.add('active');
             if (activePanel) activePanel.classList.add('active');
 
-            if (tabId === 'worlds' && config.lastMinecraftDir) {
-                loadWorlds(config.lastMinecraftDir);
+            if (tabId === 'worlds') {
+                if (isBrowserFsMode) {
+                    loadWorldsBrowser();
+                } else if (isOfflineMode) {
+                    document.getElementById('worlds-grid-container').innerHTML = `
+                        <div style="color:var(--text-secondary); padding:20px;">
+                            Worlds Manager is not available in standalone catalog mode.<br><br>
+                            To manage worlds, please run the Minestaller local agent, or connect your Minecraft folder directly:
+                            <div style="margin-top:12px;">
+                                <button class="btn btn-primary" onclick="selectLocalFolderDirect()">Connect Minecraft Folder</button>
+                            </div>
+                        </div>`;
+                } else if (config.lastMinecraftDir) {
+                    loadWorlds(config.lastMinecraftDir);
+                }
             }
             if (tabId === 'porter') {
-                loadPorterDetectedInstances();
+                if (isBrowserFsMode || isOfflineMode) {
+                    document.getElementById('panel-porter').innerHTML = `
+                        <div class="card" style="padding:20px; color:var(--text-secondary);">
+                            Minecraft Profile Migrater is not available in browser-direct or offline mode.<br><br>
+                            To migrate profiles, please download and run the Minestaller local agent.
+                        </div>`;
+                } else {
+                    loadPorterDetectedInstances();
+                }
             }
             if (tabId === 'settings') {
-                loadCompanionIPs();
+                renderSettings();
             }
             if (tabId === 'backup') {
-                loadBackups();
+                if (isBrowserFsMode) {
+                    loadBackupsBrowser();
+                } else if (isOfflineMode) {
+                    document.getElementById('panel-backup').innerHTML = `
+                        <div class="card" style="padding:20px; color:var(--text-secondary);">
+                            Backup & Restore requires local access.<br><br>
+                            Please start the Minestaller local agent or connect your Minecraft folder directly.
+                        </div>`;
+                } else {
+                    loadBackups();
+                }
             }
             closeContextPane();
         }
@@ -2986,6 +3456,507 @@
                 loadBackups();
             } catch (err) {
                 alert("Failed to delete backup: " + err.message);
+            }
+        }
+
+        // ==========================================
+        // Client-Side Browser Direct Worlds & Backups Controller
+        // ==========================================
+        async function loadWorldsBrowser() {
+            try {
+                const grid = document.getElementById('worlds-grid-container');
+                grid.innerHTML = '<div style="color:var(--text-secondary); padding:20px;">reading saves directory...</div>';
+                
+                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves', { create: false });
+                const worldsList = [];
+                
+                for await (const entry of savesHandle.values()) {
+                    if (entry.kind === 'directory') {
+                        try {
+                            const worldDirHandle = entry;
+                            const levelDatHandle = await worldDirHandle.getFileHandle('level.dat', { create: false });
+                            
+                            const wi = {
+                                directoryName: entry.name,
+                                levelName: entry.name,
+                                gameType: 0,
+                                difficulty: 2,
+                                hardcore: false,
+                                allowCommands: false,
+                                isCorrupted: false
+                            };
+                            
+                            try {
+                                const file = await levelDatHandle.getFile();
+                                const ds = new DecompressionStream('gzip');
+                                const decompressedStream = new Response(file.stream().pipeThrough(ds));
+                                const decompressedBlob = await decompressedStream.blob();
+                                const decompressedBuf = await decompressedBlob.arrayBuffer();
+                                
+                                const rootNbt = parseBrowserNBT(decompressedBuf);
+                                const data = rootNbt.value.Data;
+                                if (data) {
+                                    wi.levelName = data.value.LevelName ? data.value.LevelName.value : entry.name;
+                                    wi.gameType = data.value.GameType ? data.value.GameType.value : 0;
+                                    wi.difficulty = data.value.Difficulty ? data.value.Difficulty.value : 2;
+                                    wi.hardcore = data.value.hardcore ? data.value.hardcore.value === 1 : false;
+                                    wi.allowCommands = data.value.allowCommands ? data.value.allowCommands.value === 1 : false;
+                                }
+                            } catch (err) {
+                                console.error("NBT error for: " + entry.name, err);
+                                wi.levelName = entry.name + " (Read Error)";
+                                wi.isCorrupted = true;
+                            }
+                            worldsList.push(wi);
+                        } catch (err) {
+                            // level.dat not found
+                        }
+                    }
+                }
+                
+                worlds = worldsList;
+                
+                if (worlds.length === 0) {
+                    grid.innerHTML = '<div style="color:var(--text-secondary); padding:20px;">no saves worlds detected in folder.</div>';
+                    return;
+                }
+
+                grid.innerHTML = worlds.map(w => `
+                    <div class="world-card ${activeWorld && activeWorld.directoryName === w.directoryName ? 'selected' : ''}" onclick="selectWorldBrowser('${w.directoryName}')">
+                        <div class="world-card-name">${w.levelName}</div>
+                        <div class="world-card-meta">folder: ${w.directoryName}</div>
+                        <div class="world-card-meta">mode: ${w.isCorrupted ? 'corrupted' : getGameModeName(w.gameType)}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error("Failed to load worlds browser", e);
+                document.getElementById('worlds-grid-container').innerHTML = `<div style="color:var(--warning); padding:20px;">Failed to access saves folder: ${e.message}</div>`;
+            }
+        }
+
+        function selectWorldBrowser(dirName) {
+            const world = worlds.find(w => w.directoryName === dirName);
+            if (!world) return;
+
+            activeWorld = world;
+            
+            const cards = document.querySelectorAll('.world-card');
+            cards.forEach(c => c.classList.remove('selected'));
+            
+            // Highlight selected card
+            const grid = document.getElementById('worlds-grid-container');
+            if (grid) {
+                const cardElements = grid.querySelectorAll('.world-card');
+                cardElements.forEach(c => {
+                    const meta = c.querySelector('.world-card-meta');
+                    if (meta && meta.textContent.includes(dirName)) {
+                        c.classList.add('selected');
+                    }
+                });
+            }
+
+            const content = document.getElementById('context-content');
+            content.innerHTML = `
+                <div class="context-header">
+                    <div class="context-title">world settings</div>
+                </div>
+                <div class="card" style="margin-top:12px;">
+                    <div class="card-header"><i class="ti ti-settings-2"></i> metadata configuration</div>
+                    <div style="font-size:11px; color:var(--warning); margin-bottom:8px; font-family:var(--font-sans);">
+                        * World settings are read-only in Browser Direct mode.
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">world name</div>
+                        <input type="text" class="text-input" value="${world.levelName}" disabled>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">game mode</div>
+                        <select class="select-input" disabled>
+                            <option value="0" ${world.gameType === 0 ? 'selected' : ''}>survival</option>
+                            <option value="1" ${world.gameType === 1 ? 'selected' : ''}>creative</option>
+                            <option value="2" ${world.gameType === 2 ? 'selected' : ''}>adventure</option>
+                            <option value="3" ${world.gameType === 3 ? 'selected' : ''}>spectator</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-label">difficulty</div>
+                        <select class="select-input" disabled>
+                            <option value="0" ${world.difficulty === 0 ? 'selected' : ''}>peaceful</option>
+                            <option value="1" ${world.difficulty === 1 ? 'selected' : ''}>easy</option>
+                            <option value="2" ${world.difficulty === 2 ? 'selected' : ''}>normal</option>
+                            <option value="3" ${world.difficulty === 3 ? 'selected' : ''}>hard</option>
+                        </select>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" class="check-input" ${world.allowCommands ? 'checked' : ''} disabled>
+                        <span class="form-label" style="text-transform:lowercase;">allow cheats</span>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" class="check-input" ${world.hardcore ? 'checked' : ''} disabled>
+                        <span class="form-label" style="text-transform:lowercase;">hardcore mode</span>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <button class="btn btn-warning btn-danger" onclick="deleteWorldConfirm('${world.directoryName}', '${world.levelName.replace(/'/g, "\\'")}')" style="border-color:#ef4444; color:#ef4444;">delete world</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px;">
+                    <div class="card-header"><i class="ti ti-download"></i> datapack installer</div>
+                    <div class="datapacks-container">
+                        <div class="form-label">installed datapacks</div>
+                        <div class="datapacks-list" id="world-datapacks-list">
+                            <div style="color:var(--text-secondary); text-align:center; padding-top:20px;">loading datapacks...</div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-top:8px;">
+                            <input type="file" multiple id="local-datapack-file" style="display:none;" onchange="uploadLocalDatapacksBrowser(this)">
+                            <button class="btn" onclick="document.getElementById('local-datapack-file').click()">upload file(s)</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            openContextPane();
+            loadWorldDatapacksBrowser(world.directoryName);
+        }
+
+        async function loadWorldDatapacksBrowser(worldName) {
+            try {
+                const listDiv = document.getElementById('world-datapacks-list');
+                listDiv.innerHTML = '';
+                
+                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
+                const worldHandle = await savesHandle.getDirectoryHandle(worldName);
+                
+                let datapacksHandle;
+                try {
+                    datapacksHandle = await worldHandle.getDirectoryHandle('datapacks', { create: false });
+                } catch (e) {
+                    listDiv.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">no datapacks installed.</div>';
+                    return;
+                }
+                
+                const items = [];
+                for await (const entry of datapacksHandle.values()) {
+                    items.push({
+                        name: entry.name,
+                        type: entry.kind === 'directory' ? 'Folder' : 'ZIP'
+                    });
+                }
+                
+                if (items.length === 0) {
+                    listDiv.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">no datapacks installed.</div>';
+                    return;
+                }
+                
+                listDiv.innerHTML = items.map(item => `
+                    <div class="datapack-row" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-sub); padding:4px 0;">
+                        <div class="datapack-info" style="display:flex; gap:6px; align-items:center;">
+                            <span class="badge" style="font-size:9px; background:var(--border);">${item.type}</span>
+                            <span class="datapack-name" title="${item.name}">${item.name}</span>
+                        </div>
+                        <span class="datapack-action-del" onclick="deleteDatapackBrowser('${worldName}', '${item.name.replace(/'/g, "\\'")}')" style="color:#ef4444; font-weight:bold; cursor:pointer; font-size:12px; padding:0 4px;">x</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function deleteDatapackBrowser(worldName, name) {
+            if (!confirm(`Permanently delete datapack "${name}"?`)) return;
+            try {
+                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
+                const worldHandle = await savesHandle.getDirectoryHandle(worldName);
+                const datapacksHandle = await worldHandle.getDirectoryHandle('datapacks');
+                await datapacksHandle.removeEntry(name, { recursive: true });
+                await loadWorldDatapacksBrowser(worldName);
+            } catch (e) {
+                alert("Failed to delete datapack: " + e.message);
+            }
+        }
+
+        async function uploadLocalDatapacksBrowser(input) {
+            if (!input.files || input.files.length === 0) return;
+            try {
+                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
+                const worldHandle = await savesHandle.getDirectoryHandle(activeWorld.directoryName);
+                const datapacksHandle = await worldHandle.getDirectoryHandle('datapacks', { create: true });
+                
+                for (const file of input.files) {
+                    const fileHandle = await datapacksHandle.getFileHandle(file.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(file);
+                    await writable.close();
+                }
+                await loadWorldDatapacksBrowser(activeWorld.directoryName);
+                alert("Datapack(s) uploaded successfully.");
+            } catch (e) {
+                alert("Failed to upload datapacks: " + e.message);
+            }
+        }
+
+        async function loadBackupsBrowser() {
+            const container = document.getElementById('backup-list-container');
+            if (!container) return;
+            
+            const pathDisplay = document.getElementById('backup-path-display');
+            if (pathDisplay) {
+                pathDisplay.textContent = "Browser File Handle / minestaller_backups";
+            }
+            
+            try {
+                let backupsHandle;
+                try {
+                    backupsHandle = await localMinecraftDirHandle.getDirectoryHandle('minestaller_backups', { create: false });
+                } catch (e) {
+                    container.innerHTML = '<div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>';
+                    return;
+                }
+
+                const backups = [];
+                for await (const entry of backupsHandle.values()) {
+                    if (entry.kind === 'file' && entry.name.endsWith('.zip')) {
+                        const file = await entry.getFile();
+                        backups.push({
+                            filename: entry.name,
+                            sizeMB: (file.size / (1024 * 1024)).toFixed(1),
+                            createdAt: file.lastModified
+                        });
+                    }
+                }
+
+                if (backups.length === 0) {
+                    container.innerHTML = '<div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>';
+                    return;
+                }
+
+                container.innerHTML = backups.map(b => {
+                    const date = new Date(b.createdAt).toLocaleString();
+                    return `
+                        <div class="list-row" style="background: var(--bg-base); border: 1px solid var(--border-sub); padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+                            <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1;">
+                                <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary);" title="${b.filename}">
+                                    ${b.filename}
+                                </div>
+                                <div style="font-size: 10px; color: var(--text-dim); display: flex; gap: 8px; align-items: center;">
+                                    <span>${date}</span>
+                                    <span style="color: var(--accent); font-weight: bold;">${b.sizeMB} MB</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                                <button class="btn" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" onclick="deleteBackupBrowser('${b.filename.replace(/'/g, "\\'")}')">
+                                    <i class="ti ti-trash"></i> delete
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error("Failed to load backups browser", err);
+                container.innerHTML = `<div style="color: #ef4444; padding:20px; text-align: center;">Error: ${err.message}</div>`;
+            }
+        }
+
+        async function deleteBackupBrowser(filename) {
+            if (!confirm(`Are you sure you want to permanently delete the backup: ${filename}?`)) return;
+            try {
+                const backupsHandle = await localMinecraftDirHandle.getDirectoryHandle('minestaller_backups');
+                await backupsHandle.removeEntry(filename);
+                await loadBackupsBrowser();
+            } catch (e) {
+                alert("Failed to delete backup: " + e.message);
+            }
+        }
+
+        function deleteWorldConfirm(dirName, levelName) {
+            worldToDeleteDirName = dirName;
+            worldToDeleteLevelName = levelName;
+            document.getElementById('delete-world-label').textContent = levelName;
+            document.getElementById('confirm-delete-world-overlay').style.display = 'flex';
+        }
+
+        function closeDeleteWorldConfirmation() {
+            document.getElementById('confirm-delete-world-overlay').style.display = 'none';
+        }
+
+        async function runDeleteWorld() {
+            try {
+                if (isBrowserFsMode) {
+                    const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
+                    await savesHandle.removeEntry(worldToDeleteDirName, { recursive: true });
+                    closeDeleteWorldConfirmation();
+                    closeContextPane();
+                    await loadWorldsBrowser();
+                    alert("World deleted successfully.");
+                } else {
+                    const res = await fetch('/api/worlds/delete', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            instancePath: currentInstancePath,
+                            worldName: worldToDeleteDirName
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.error) throw new Error(data.error);
+                    closeDeleteWorldConfirmation();
+                    closeContextPane();
+                    await loadWorlds(config.lastMinecraftDir);
+                    alert("World deleted successfully.");
+                }
+            } catch (err) {
+                alert("Failed to delete world: " + err.message);
+            }
+        }
+
+        function renderSettings() {
+            const settingsPanel = document.getElementById('panel-settings');
+            if (!settingsPanel) return;
+            
+            if (isBrowserFsMode) {
+                settingsPanel.innerHTML = `
+                    <div class="card">
+                        <div class="card-header"><i class="ti ti-settings"></i> browser direct configuration</div>
+                        <div style="font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            Connected directly via Browser File System: <strong style="color:var(--accent); font-family:var(--font-mono);">${localMinecraftDirHandle.name}</strong><br><br>
+                            To disconnect or link a different directory:
+                            <div style="margin-top: 12px;">
+                                <button class="btn btn-primary" onclick="selectLocalFolderDirect()">Select New Minecraft Folder</button>
+                                <button class="btn" style="margin-left: 8px;" onclick="enableOfflineMode()">Disconnect & Enter Demo Mode</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-header"><i class="ti ti-download"></i> metadata override settings</div>
+                        <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
+                            Configure what Minecraft version and mod loader target are used to resolve addon downloads:
+                        </div>
+                        <div class="form-row">
+                            <div class="form-label">minecraft version</div>
+                            <input type="text" class="text-input" id="browser-version-override" value="${browserInstanceVersion}" style="max-width:200px;">
+                        </div>
+                        <div class="form-row" style="margin-top:10px;">
+                            <div class="form-label">mod loader</div>
+                            <select class="select-input" id="browser-loader-override" style="max-width:200px;">
+                                <option value="fabric" ${browserInstanceLoader === 'fabric' ? 'selected' : ''}>fabric</option>
+                                <option value="forge" ${browserInstanceLoader === 'forge' ? 'selected' : ''}>forge</option>
+                                <option value="neoforge" ${browserInstanceLoader === 'neoforge' ? 'selected' : ''}>neoforge</option>
+                                <option value="vanilla" ${browserInstanceLoader === 'vanilla' ? 'selected' : ''}>vanilla</option>
+                            </select>
+                        </div>
+                        <div style="margin-top: 16px;">
+                            <button class="btn btn-primary" onclick="saveBrowserOverrides()">save overrides</button>
+                        </div>
+                    </div>
+                `;
+            } else if (isOfflineMode) {
+                settingsPanel.innerHTML = `
+                    <div class="card">
+                        <div class="card-header"><i class="ti ti-settings"></i> standalone / demo mode settings</div>
+                        <div style="font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
+                            Running in Standalone Catalog / Demo Mode.<br><br>
+                            To link a directory directly without installing the agent, click:
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-primary" onclick="selectLocalFolderDirect()">Connect Minecraft Folder</button>
+                            </div>
+                            <br>
+                            To run with local agent, download the agent files or re-run the connection script in your terminal:
+                            <pre style="background:var(--bg-base); border:1px solid var(--border); padding:8px; border-radius:4px; font-family:var(--font-mono); font-size:11px; margin-top:6px; color:var(--text-primary); user-select:all; white-space:pre-wrap;">powershell -ExecutionPolicy Bypass -Command "irm https://minestaller.vercel.app/connect.ps1 | iex"</pre>
+                        </div>
+                    </div>
+                `;
+            } else {
+                settingsPanel.innerHTML = originalSettingsPanelHtml;
+                document.getElementById('settings-dir-input').value = config.lastMinecraftDir || '';
+                loadCompanionIPs();
+                loadDetectedInstances();
+            }
+        }
+        
+        function saveBrowserOverrides() {
+            browserInstanceVersion = document.getElementById('browser-version-override').value.trim() || '1.20.1';
+            browserInstanceLoader = document.getElementById('browser-loader-override').value || 'fabric';
+            fetchInstanceDataBrowser();
+            alert("Metadata override settings saved successfully.");
+        }
+
+        function triggerDownload(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function installTasksOffline(tasks) {
+            alert(`Downloading ${tasks.length} file(s) via your browser. Please save them to your Minecraft folders manually:\n` + 
+                  tasks.map(t => `- ${t.filename} (place in: ${t.type === 'shader' ? 'shaderpacks' : t.type === 'datapack' ? 'saves/<world>/datapacks' : t.type + 's'})`).join('\n'));
+                  
+            tasks.forEach(task => {
+                triggerDownload(task.url, task.filename);
+            });
+        }
+
+        async function installTasksBrowser(tasks) {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('btn-cancel-install').disabled = true;
+            document.getElementById('btn-close-progress').disabled = true;
+            document.getElementById('progress-fill-bar').style.width = '0%';
+            document.getElementById('progress-text-pct').textContent = '0%';
+            document.getElementById('progress-phase-label').textContent = 'step: downloading files directly via browser';
+            
+            const consoleLogs = document.getElementById('progress-console-logs');
+            consoleLogs.innerHTML = '';
+
+            function log(msg) {
+                consoleLogs.innerHTML += `<div>${msg}</div>`;
+                consoleLogs.scrollTop = consoleLogs.scrollHeight;
+            }
+
+            try {
+                let count = 0;
+                for (const task of tasks) {
+                    log(`[DOWNLOAD] Fetching: ${task.filename}...`);
+                    const res = await fetch(task.url);
+                    if (!res.ok) throw new Error(`Failed to download ${task.filename}: ${res.statusText}`);
+                    
+                    const arrayBuffer = await res.arrayBuffer();
+                    log(`[WRITE] Saving ${task.filename} to ${task.type}s/...`);
+                    
+                    let parentHandle = localMinecraftDirHandle;
+                    let folderName = task.type + 's';
+                    if (task.type === 'shader') folderName = 'shaderpacks';
+                    
+                    if (task.type === 'datapack') {
+                        const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves', { create: true });
+                        const worldHandle = await savesHandle.getDirectoryHandle(task.worldName, { create: true });
+                        parentHandle = await worldHandle.getDirectoryHandle('datapacks', { create: true });
+                    } else {
+                        parentHandle = await localMinecraftDirHandle.getDirectoryHandle(folderName, { create: true });
+                    }
+                    
+                    const fileHandle = await parentHandle.getFileHandle(task.filename, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(arrayBuffer);
+                    await writable.close();
+                    
+                    count++;
+                    const pct = Math.round((count / tasks.length) * 100);
+                    document.getElementById('progress-fill-bar').style.width = `${pct}%`;
+                    document.getElementById('progress-text-pct').textContent = `${pct}%`;
+                    log(`[SUCCESS] Installed ${task.filename}`);
+                }
+                
+                document.getElementById('progress-phase-label').textContent = 'step: installation completed';
+                log(`[SUCCESS] All ${tasks.length} files installed successfully!`);
+                document.getElementById('btn-close-progress').disabled = false;
+                
+                await fetchInstanceDataBrowser();
+            } catch (err) {
+                log(`[ERROR] Installation failed: ${err.message}`);
+                document.getElementById('progress-phase-label').textContent = 'step: installation failed';
+                document.getElementById('btn-close-progress').disabled = false;
             }
         }
 
@@ -3514,7 +4485,13 @@
             updateQueueFooter();
             mainFrameClearActiveWorld();
 
-            startInstallationProgress(tasks);
+            if (isBrowserFsMode) {
+                await installTasksBrowser(tasks);
+            } else if (isOfflineMode) {
+                installTasksOffline(tasks);
+            } else {
+                startInstallationProgress(tasks);
+            }
         }
 
         async function initiateSingleInstall() {
@@ -3530,7 +4507,13 @@
                 const tasks = await resolveModrinthDownloadTask(selectedProject, targetWorld);
                 if (tasks && tasks.length > 0) {
                     closeContextPane();
-                    startInstallationProgress(tasks);
+                    if (isBrowserFsMode) {
+                        await installTasksBrowser(tasks);
+                    } else if (isOfflineMode) {
+                        installTasksOffline(tasks);
+                    } else {
+                        startInstallationProgress(tasks);
+                    }
                 } else {
                     alert("No compatible version found on Modrinth.");
                 }

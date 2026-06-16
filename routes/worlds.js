@@ -137,6 +137,28 @@ router.post('/api/worlds/datapacks/delete', (req, res) => {
 });
 
 /**
+ * POST /api/worlds/delete
+ * Delete a specific world directory
+ */
+router.post('/api/worlds/delete', (req, res) => {
+    const { instancePath, worldName } = req.body;
+    if (!instancePath || !worldName) {
+        return res.status(400).json({ error: "Missing required properties" });
+    }
+
+    const worldDir = path.join(instancePath, 'saves', worldName);
+    try {
+        if (!fs.existsSync(worldDir)) {
+            return res.status(404).json({ error: "World directory not found" });
+        }
+        deleteRecursive(worldDir);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: "Failed to delete world: " + e.message });
+    }
+});
+
+/**
  * POST /api/worlds/:worldName/datapacks/upload
  * Stream a raw binary datapack file upload into target folder
  */

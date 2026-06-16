@@ -11,14 +11,14 @@ Minestaller is a retro-futuristic Minecraft management platform. It consists of:
 ### Java Terminal Client
 - **Language**: Java 17+
 - **Build System**: Maven (Local portable instance included in project)
-- **UI Framework**: Swing styled with **FlatLaf** Cyberpunk/Dark look-and-feel
+- **UI Framework**: Swing styled with **FlatLaf** for a terminal feel, kinda looks pro and silly at the same time.
 - **API Client**: Asynchronous `HttpClient`
 - **JSON Parsing**: Gson
 
 ### Node.js Web Companion Agent
 - **Platform**: Node.js & Express
 - **Parsing Engines**: Custom binary NBT parser (level.dat modifier)
-- **Frontend UI**: Vanilla HTML5, CSS (glassmorphism/dark palettes), and modular JavaScript
+- **Frontend UI**: Vanilla HTML5, CSS (Multiple Themes), and modular JavaScript
 - **Connectors**: Multi-platform installer scripts (`connect.bat`, `connect.sh`, `connect.ps1`)
 
 ---
