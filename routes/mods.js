@@ -3,6 +3,7 @@ const router = express.Router();
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const AdmZip = require('adm-zip');
 const { GLOBAL_CONFIG_PATH, downloadFile } = require('../utils/sys');
 const { deleteRecursive } = require('../utils/file');
 
@@ -29,8 +30,13 @@ router.get('/api/resolve-modpack', async (req, res) => {
         // Download mrpack file
         await downloadFile(url, tempFile);
 
-        // Extract modrinth.index.json
-        const indexContent = execSync(`tar -xf "${tempFile}" -O modrinth.index.json`).toString('utf8');
+        // Extract modrinth.index.json using adm-zip
+        const zip = new AdmZip(tempFile);
+        const indexEntry = zip.getEntry('modrinth.index.json');
+        if (!indexEntry) {
+            throw new Error("modrinth.index.json not found in modpack");
+        }
+        const indexContent = indexEntry.getData().toString('utf8');
         const index = JSON.parse(indexContent);
 
         // Delete temp file
@@ -180,8 +186,9 @@ async function runInstallationSequence() {
                     }
                     fs.mkdirSync(extractTempDir, { recursive: true });
 
-                    // Extract the .mrpack zip using tar
-                    execSync(`tar -xf "${mrpackPath}" -C "${extractTempDir}"`);
+                    // Extract the .mrpack zip using adm-zip
+                    const zip = new AdmZip(mrpackPath);
+                    zip.extractAllTo(extractTempDir, true);
 
                     // Parse the index.json to retrieve title and version
                     const indexJsonPath = path.join(extractTempDir, 'modrinth.index.json');

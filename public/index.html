@@ -1734,18 +1734,11 @@
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
                 <strong style="color:var(--text-primary);">Select your connection method:</strong><br><br>
-                • <strong>Use Agent (Recommended)</strong>: Connects via a lightweight local companion. Best for standard installations, as it bypasses browser sandbox blocks on default folders like AppData.<br><br>
-                • <strong>Connect Folder (No Agent)</strong>: Links a directory directly. <em>Note: Browsers block selecting folders inside AppData (used by the standard launcher and Modrinth App) due to security rules. Use this option if your game directory is set to a custom folder outside AppData (e.g. in Documents, Desktop, or another drive).</em>
+                • <strong>Use Agent (Recommended)</strong>: Connects via a lightweight local companion. Best for standard installations, as it bypasses browser sandbox blocks on default folders like AppData.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionContinueStartup()">
                     Continue (Use Agent)
-                </button>
-                <button class="action-btn btn-secondary" id="btn-welcome-browser-direct" style="width: 100%; font-weight: bold; text-transform: none;" onclick="selectLocalFolderDirect()">
-                    Connect Folder via Browser (No Agent)
-                </button>
-                <button class="action-btn btn-secondary" style="width: 100%; font-weight: none; text-transform: none; border-color: transparent; color: var(--text-secondary);" onclick="enableOfflineMode()">
-                    Browse Catalog (Demo / Offline Mode)
                 </button>
             </div>
         </div>
@@ -1759,18 +1752,11 @@
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 16px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
                 <strong style="color:var(--text-primary);">Helper agent is offline.</strong><br><br>
-                • <strong>Connect Agent (Recommended)</strong> to manage your default Minecraft path without browser sandbox blocks.<br><br>
-                • Alternatively, select a custom Minecraft directory outside AppData (e.g., in Documents, Desktop, or a custom launcher profile folder) using the browser direct connection, or run in Offline Mode.
+                • <strong>Connect Agent (Recommended)</strong> to manage your default Minecraft path without browser sandbox blocks.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="openConnectDeviceModal()">
                     <i class="ti ti-device-laptop" style="margin-right: 6px;"></i> Connect With Device (Agent)
-                </button>
-                <button class="action-btn btn-secondary" id="btn-setup-browser-direct" style="width: 100%; font-weight: bold; text-transform: none;" onclick="selectLocalFolderDirect()">
-                    Connect Folder via Browser (No Agent)
-                </button>
-                <button class="action-btn btn-secondary" style="width: 100%; font-weight: none; text-transform: none; border-color: transparent; color: var(--text-secondary);" onclick="enableOfflineMode()">
-                    Browse Catalog (Demo / Offline Mode)
                 </button>
             </div>
             <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;">
@@ -1919,7 +1905,7 @@
         };
 
         // ==========================================
-        // Client-Side NBT Binary Engine (BrowserDirect)
+        // Lifecycle Handlers & Scan Init
         // ==========================================
         class BrowserNbtReader {
             constructor(arrayBuffer) {
@@ -2162,12 +2148,7 @@
 
         let config = { lastMinecraftDir: "", instances: {} };
 
-        let localMinecraftDirHandle = null;
-        let isBrowserFsMode = false;
-        let isOfflineMode = false;
         let originalSettingsPanelHtml = '';
-        let browserInstanceVersion = "1.20.1";
-        let browserInstanceLoader = "fabric";
         let worldToDeleteDirName = '';
         let worldToDeleteLevelName = '';
 
@@ -2568,454 +2549,6 @@
         // ==========================================
         // Client-Side Browser Direct File System Handlers
         // ==========================================
-        async function selectLocalFolderDirect() {
-            try {
-                if (!window.showDirectoryPicker) {
-                    alert("Your browser does not support the File System Access API. Please use a Chromium-based browser like Chrome, Edge, or Opera to connect directly, or use the helper agent.");
-                    return;
-                }
-                
-                const handle = await window.showDirectoryPicker({
-                    mode: 'readwrite'
-                });
-                
-                let hasMods = false;
-                let hasSaves = false;
-                for await (const entry of handle.values()) {
-                    if (entry.kind === 'directory') {
-                        if (entry.name === 'mods') hasMods = true;
-                        if (entry.name === 'saves') hasSaves = true;
-                    }
-                }
-                
-                if (!hasMods && !hasSaves) {
-                    if (!confirm("This folder does not appear to contain 'mods' or 'saves' subfolders. Are you sure this is your Minecraft directory?")) {
-                        return;
-                    }
-                }
-                
-                localMinecraftDirHandle = handle;
-                isBrowserFsMode = true;
-                isOfflineMode = false;
-                
-                document.getElementById('startup-welcome-screen').style.display = 'none';
-                document.getElementById('agent-setup-overlay').style.display = 'none';
-                hideInstanceSetupBlocker();
-                
-                if (agentPollInterval) {
-                    clearInterval(agentPollInterval);
-                    agentPollInterval = null;
-                }
-                
-                await fetchInstanceDataBrowser();
-                
-            } catch (e) {
-                console.error("Directory selection cancelled or failed", e);
-            }
-        }
-
-        function enableOfflineMode() {
-            isOfflineMode = true;
-            isBrowserFsMode = false;
-            localMinecraftDirHandle = null;
-            
-            document.getElementById('startup-welcome-screen').style.display = 'none';
-            document.getElementById('agent-setup-overlay').style.display = 'none';
-            hideInstanceSetupBlocker();
-            
-            if (agentPollInterval) {
-                clearInterval(agentPollInterval);
-                agentPollInterval = null;
-            }
-            
-            browserInstanceVersion = "1.20.1";
-            browserInstanceLoader = "fabric";
-
-            document.getElementById('status-dir').innerHTML = `<span style="color:var(--warning); font-weight:bold;">Offline / Demo Mode</span>`;
-            document.getElementById('status-version').textContent = "1.20.1";
-            document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">fabric</span>`;
-            document.getElementById('status-state').innerHTML = `<span style="color:var(--warning);">● standalone</span>`;
-            document.getElementById('sidebar-active-instance').textContent = "Demo Mode";
-            
-            document.getElementById('stat-version').textContent = "1.20.1";
-            document.getElementById('stat-mods').textContent = "0";
-            document.getElementById('stat-resourcepacks').textContent = "0";
-            document.getElementById('stat-resourcepacks-active').textContent = "0 active";
-            document.getElementById('stat-shaders').textContent = "0";
-            document.getElementById('stat-shaders-active').textContent = "0 active";
-            
-            const rpList = document.getElementById('dash-resourcepacks-list');
-            if (rpList) rpList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">Connect your folder to manage resourcepacks.</div>';
-            const shList = document.getElementById('dash-shaders-list');
-            if (shList) shList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">Connect your folder to manage shaders.</div>';
-            
-            const mpContainer = document.getElementById('dash-modpack-container');
-            if (mpContainer) mpContainer.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">Running in catalog browser mode.</div>';
-            
-            document.getElementById('profile-java').textContent = 'N/A';
-            document.getElementById('profile-ram').textContent = 'N/A';
-            document.getElementById('profile-worlds').textContent = '0';
-            document.getElementById('profile-size').textContent = 'N/A';
-
-            const footDot = document.getElementById('footer-dot-connection');
-            const footConn = document.getElementById('footer-connection');
-            footDot.className = 'footer-dot green';
-            footConn.textContent = 'Modrinth online';
-            document.getElementById('footer-queue').textContent = `${cart.length} queued · Standalone`;
-
-            // Show selectors row and sync values
-            const selRow = document.getElementById('offline-selectors-row');
-            if (selRow) selRow.style.display = 'flex';
-            syncSearchFilterUI();
-        }
-
-        async function detectMcVersionBrowser() {
-            let detectedVersion = null;
-            let detectedLoader = null;
-
-            // 1. Try instance.cfg (Prism / MultiMC)
-            try {
-                const cfgHandle = await localMinecraftDirHandle.getFileHandle('instance.cfg', { create: false });
-                const file = await cfgHandle.getFile();
-                const text = await file.text();
-                const lines = text.split('\n');
-                let mcVer = null;
-                let loaderType = 'vanilla';
-                
-                for (let line of lines) {
-                    line = line.trim();
-                    if (line.startsWith('minecraftVersion=')) {
-                        mcVer = line.split('=')[1].trim();
-                    } else if (line.startsWith('IntendedVersion=')) {
-                        mcVer = line.split('=')[1].trim();
-                    } else if (line.startsWith('iconKey=')) {
-                        const icon = line.split('=')[1].trim().toLowerCase();
-                        if (icon.includes('fabric')) loaderType = 'fabric';
-                        else if (icon.includes('forge')) loaderType = 'forge';
-                        else if (icon.includes('neoforge')) loaderType = 'neoforge';
-                        else if (icon.includes('quilt')) loaderType = 'quilt';
-                    }
-                    
-                    if (line.toLowerCase().includes('loader') || line.toLowerCase().includes('addon')) {
-                        const parts = line.split('=');
-                        if (parts.length > 1) {
-                            const val = parts[1].trim().toLowerCase();
-                            if (val.includes('fabric')) loaderType = 'fabric';
-                            else if (val.includes('forge')) loaderType = 'forge';
-                            else if (val.includes('neoforge')) loaderType = 'neoforge';
-                            else if (val.includes('quilt')) loaderType = 'quilt';
-                        }
-                    }
-                }
-                if (mcVer) {
-                    detectedVersion = mcVer;
-                    detectedLoader = loaderType;
-                }
-            } catch (err) {}
-
-            // 2. Try mmc-pack.json (Prism / MultiMC components)
-            if (!detectedVersion) {
-                try {
-                    const packHandle = await localMinecraftDirHandle.getFileHandle('mmc-pack.json', { create: false });
-                    const file = await packHandle.getFile();
-                    const text = await file.text();
-                    const data = JSON.parse(text);
-                    if (data.components) {
-                        let mcVer = null;
-                        let loaderType = 'vanilla';
-                        for (const comp of data.components) {
-                            if (comp.uid === 'net.minecraft' && comp.version) {
-                                mcVer = comp.version;
-                            } else if (comp.uid === 'net.fabricmc.fabric-loader') {
-                                loaderType = 'fabric';
-                            } else if (comp.uid === 'net.minecraftforge') {
-                                loaderType = 'forge';
-                            } else if (comp.uid === 'org.quiltmc.quilt-loader') {
-                                loaderType = 'quilt';
-                            } else if (comp.uid === 'net.neoforged') {
-                                loaderType = 'neoforge';
-                            }
-                        }
-                        if (mcVer) {
-                            detectedVersion = mcVer;
-                            detectedLoader = loaderType;
-                        }
-                    }
-                } catch (err) {}
-            }
-
-            // 3. Try launcher_profiles.json
-            if (!detectedVersion) {
-                try {
-                    const lpHandle = await localMinecraftDirHandle.getFileHandle('launcher_profiles.json', { create: false });
-                    const file = await lpHandle.getFile();
-                    const text = await file.text();
-                    const data = JSON.parse(text);
-                    if (data.profiles) {
-                        const targetDirName = localMinecraftDirHandle.name.toLowerCase();
-                        for (const p of Object.values(data.profiles)) {
-                            if (p.lastVersionId) {
-                                const lastVer = p.lastVersionId.toLowerCase();
-                                let isMatch = false;
-                                if (p.gameDir) {
-                                    const gd = p.gameDir.replace(/\\/g, '/').toLowerCase();
-                                    if (gd.endsWith('/' + targetDirName) || targetDirName.endsWith('/' + gd) || gd === targetDirName) {
-                                        isMatch = true;
-                                    }
-                                } else {
-                                    isMatch = true;
-                                }
-
-                                if (isMatch) {
-                                    let loaderType = 'vanilla';
-                                    if (lastVer.includes('fabric')) loaderType = 'fabric';
-                                    else if (lastVer.includes('neoforge')) loaderType = 'neoforge';
-                                    else if (lastVer.includes('forge')) loaderType = 'forge';
-                                    else if (lastVer.includes('quilt')) loaderType = 'quilt';
-
-                                    const match = lastVer.match(/(1\.\d+(?:\.\d+)?)/);
-                                    if (match) {
-                                        detectedVersion = match[1];
-                                        detectedLoader = loaderType;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {}
-            }
-
-            // 4. Try folder name fallback (e.g. Mero_1.21.11 -> 1.21.11)
-            if (!detectedVersion) {
-                const name = localMinecraftDirHandle.name.toLowerCase();
-                const match = name.match(/(1\.\d+(?:\.\d+)?)/);
-                if (match) {
-                    detectedVersion = match[1];
-                }
-                if (name.includes('fabric')) detectedLoader = 'fabric';
-                else if (name.includes('neoforge')) detectedLoader = 'neoforge';
-                else if (name.includes('forge')) detectedLoader = 'forge';
-                else if (name.includes('quilt')) detectedLoader = 'quilt';
-            }
-
-            // 5. Try to guess from mods folder filenames first (extremely fast)
-            if (!detectedVersion || !detectedLoader || detectedLoader === 'vanilla') {
-                try {
-                    const modsHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: false });
-                    let fabricCount = 0;
-                    let forgeCount = 0;
-                    let neoforgeCount = 0;
-                    let quiltCount = 0;
-                    let jarVersions = [];
-
-                    for await (const entry of modsHandle.values()) {
-                        if (entry.kind === 'file' && entry.name.endsWith('.jar')) {
-                            const name = entry.name.toLowerCase();
-                            if (name.includes('fabric')) fabricCount++;
-                            if (name.includes('neoforge')) neoforgeCount++;
-                            if (name.includes('forge') && !name.includes('neoforge')) forgeCount++;
-                            if (name.includes('quilt')) quiltCount++;
-
-                            const match = name.match(/(1\.\d+(?:\.\d+)?)/);
-                            if (match) {
-                                jarVersions.push(match[1]);
-                            }
-                        }
-                    }
-
-                    if (!detectedLoader || detectedLoader === 'vanilla') {
-                        if (fabricCount > 0 && fabricCount >= forgeCount && fabricCount >= neoforgeCount) detectedLoader = 'fabric';
-                        else if (neoforgeCount > 0) detectedLoader = 'neoforge';
-                        else if (forgeCount > 0) detectedLoader = 'forge';
-                        else if (quiltCount > 0) detectedLoader = 'quilt';
-                    }
-
-                    if (!detectedVersion && jarVersions.length > 0) {
-                        const freqMap = {};
-                        let maxCount = 0;
-                        let mostFreqVer = jarVersions[0];
-                        for (const v of jarVersions) {
-                            freqMap[v] = (freqMap[v] || 0) + 1;
-                            if (freqMap[v] > maxCount) {
-                                maxCount = freqMap[v];
-                                mostFreqVer = v;
-                            }
-                        }
-                        detectedVersion = mostFreqVer;
-                    }
-                } catch (err) {}
-            }
-
-            // 6. Try parsing JAR zip contents for a sample of mods (up to 3 JARs) to verify
-            if (typeof JSZip !== 'undefined' && (!detectedVersion || !detectedLoader || detectedLoader === 'vanilla')) {
-                try {
-                    const modsHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: false });
-                    let scanned = 0;
-                    for await (const entry of modsHandle.values()) {
-                        if (entry.kind === 'file' && entry.name.endsWith('.jar') && scanned < 3) {
-                            scanned++;
-                            try {
-                                const file = await entry.getFile();
-                                const buffer = await file.arrayBuffer();
-                                const zip = await JSZip.loadAsync(buffer);
-                                
-                                const fabricJson = zip.file('fabric.mod.json');
-                                const quiltJson = zip.file('quilt.mod.json');
-                                const modsToml = zip.file('META-INF/mods.toml');
-
-                                if (fabricJson) {
-                                    if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'fabric';
-                                    if (!detectedVersion) {
-                                        const content = await fabricJson.async('text');
-                                        const modData = JSON.parse(content);
-                                        if (modData.depends && modData.depends.minecraft) {
-                                            const match = modData.depends.minecraft.match(/(1\.\d+(?:\.\d+)?)/);
-                                            if (match) {
-                                                detectedVersion = match[1];
-                                            }
-                                        }
-                                    }
-                                } else if (quiltJson) {
-                                    if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'quilt';
-                                } else if (modsToml) {
-                                    const content = await modsToml.async('text');
-                                    if (content.toLowerCase().includes('neoforge')) {
-                                        if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'neoforge';
-                                    } else {
-                                        if (!detectedLoader || detectedLoader === 'vanilla') detectedLoader = 'forge';
-                                    }
-                                }
-                            } catch (zipErr) {
-                                console.warn("Failed to parse mod ZIP metadata for " + entry.name, zipErr);
-                            }
-                        }
-                    }
-                } catch (err) {}
-            }
-
-            // 7. Last resort: scan the versions folder
-            if (!detectedVersion) {
-                try {
-                    const versionsHandle = await localMinecraftDirHandle.getDirectoryHandle('versions', { create: false });
-                    const versions = [];
-                    for await (const entry of versionsHandle.values()) {
-                        if (entry.kind === 'directory' && /^\d+\.\d+(\.\d+)?$/.test(entry.name)) {
-                            versions.push(entry.name);
-                        }
-                    }
-                    if (versions.length > 0) {
-                        versions.sort((a, b) => {
-                            const partsA = a.split('.').map(Number);
-                            const partsB = b.split('.').map(Number);
-                            for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {
-                                const valA = partsA[i] || 0;
-                                const valB = partsB[i] || 0;
-                                if (valA !== valB) return valB - valA;
-                            }
-                            return 0;
-                        });
-                        detectedVersion = versions[0];
-                    }
-                } catch (err) {}
-            }
-
-            return {
-                mcVersion: detectedVersion || '1.20.1',
-                loader: detectedLoader || 'fabric'
-            };
-        }
-
-        async function fetchInstanceDataBrowser() {
-            if (!localMinecraftDirHandle) return;
-            
-            let totalMods = 0;
-            try {
-                const modsHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: false });
-                for await (const entry of modsHandle.values()) {
-                    if (entry.kind === 'file' && entry.name.endsWith('.jar')) {
-                        totalMods++;
-                    }
-                }
-            } catch (err) {}
-
-            let totalWorlds = 0;
-            try {
-                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves', { create: false });
-                for await (const entry of savesHandle.values()) {
-                    if (entry.kind === 'directory') {
-                        totalWorlds++;
-                    }
-                }
-            } catch (err) {}
-
-            let totalRps = 0;
-            try {
-                const rpHandle = await localMinecraftDirHandle.getDirectoryHandle('resourcepacks', { create: false });
-                for await (const entry of rpHandle.values()) {
-                    totalRps++;
-                }
-            } catch (err) {}
-
-            let totalShaders = 0;
-            try {
-                const shaderHandle = await localMinecraftDirHandle.getDirectoryHandle('shaderpacks', { create: false });
-                for await (const entry of shaderHandle.values()) {
-                    totalShaders++;
-                }
-            } catch (err) {}
-
-            if (!browserInstanceVersion || browserInstanceVersion === "Unknown" || browserInstanceVersion === "--") {
-                const detected = await detectMcVersionBrowser();
-                browserInstanceVersion = detected.mcVersion;
-                browserInstanceLoader = detected.loader;
-            }
-
-            document.getElementById('status-dir').innerHTML = `Direct: <span style="color:var(--accent); font-weight:bold;">${localMinecraftDirHandle.name}</span>`;
-            document.getElementById('status-version').textContent = browserInstanceVersion;
-            document.getElementById('status-loader').innerHTML = `<span style="color:var(--accent);">${browserInstanceLoader}</span>`;
-            document.getElementById('status-state').innerHTML = `<span style="color:var(--success);">● ready (browser direct)</span>`;
-            document.getElementById('sidebar-active-instance').textContent = localMinecraftDirHandle.name;
-
-            document.getElementById('stat-version').textContent = browserInstanceVersion;
-            document.getElementById('stat-mods').textContent = totalMods;
-            document.getElementById('stat-resourcepacks').textContent = totalRps;
-            document.getElementById('stat-resourcepacks-active').textContent = `Local mode`;
-            document.getElementById('stat-shaders').textContent = totalShaders;
-            document.getElementById('stat-shaders-active').textContent = `Local mode`;
-
-            const rpList = document.getElementById('dash-resourcepacks-list');
-            if (rpList) rpList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-family:var(--font-mono); font-size:11px;">Resourcepacks managed directly in your folder.</div>';
-            const shList = document.getElementById('dash-shaders-list');
-            if (shList) shList.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px; font-family:var(--font-mono); font-size:11px;">Shaders managed directly in your folder.</div>';
-            
-            const mpContainer = document.getElementById('dash-modpack-container');
-            if (mpContainer) {
-                mpContainer.innerHTML = `
-                    <div class="modpack-card not-detected">
-                        <div class="modpack-icon" style="color: var(--text-dim);">⚗️</div>
-                        <span style="font-family:var(--font-mono); font-size:11px; color:var(--text-dim);">Running in browser direct mode</span>
-                    </div>
-                `;
-            }
-
-            document.getElementById('profile-java').textContent = 'N/A';
-            document.getElementById('profile-ram').textContent = 'N/A';
-            document.getElementById('profile-worlds').textContent = totalWorlds;
-            document.getElementById('profile-size').textContent = 'N/A';
-
-            const footDot = document.getElementById('footer-dot-connection');
-            const footConn = document.getElementById('footer-connection');
-            footDot.className = 'footer-dot green';
-            footConn.textContent = 'Modrinth online';
-            document.getElementById('footer-queue').textContent = `${cart.length} queued · Browser Direct`;
-
-            // Show selectors row and sync values
-            const selRow = document.getElementById('offline-selectors-row');
-            if (selRow) selRow.style.display = 'flex';
-            syncSearchFilterUI();
-        }
-
         // Path truncation helper (show only last folder name)
         function truncatePath(fullPath) {
             if (!fullPath) return '--';
@@ -3052,49 +2585,6 @@
             const settingsPanel = document.getElementById('panel-settings');
             if (settingsPanel) {
                 originalSettingsPanelHtml = settingsPanel.innerHTML;
-            }
-
-            // Hide browser direct buttons if not supported (e.g. Firefox)
-            if (!window.showDirectoryPicker) {
-                const welcomeDirectBtn = document.getElementById('btn-welcome-browser-direct');
-                if (welcomeDirectBtn) welcomeDirectBtn.style.display = 'none';
-                const setupDirectBtn = document.getElementById('btn-setup-browser-direct');
-                if (setupDirectBtn) setupDirectBtn.style.display = 'none';
-            }
-
-            // Allow click-to-override on version/loader in browser-direct or offline mode
-            const statusVerEl = document.getElementById('status-version');
-            if (statusVerEl) {
-                statusVerEl.style.cursor = 'pointer';
-                statusVerEl.addEventListener('click', () => {
-                    if (isBrowserFsMode || isOfflineMode) {
-                        const current = statusVerEl.textContent;
-                        const v = prompt("Enter Minecraft version (e.g. 1.20.1, 1.21):", current);
-                        if (v) {
-                            browserInstanceVersion = v;
-                            statusVerEl.textContent = v;
-                            const statVerEl = document.getElementById('stat-version');
-                            if (statVerEl) statVerEl.textContent = v;
-                            if (isBrowserFsMode) fetchInstanceDataBrowser();
-                        }
-                    }
-                });
-            }
-
-            const statusLoadEl = document.getElementById('status-loader');
-            if (statusLoadEl) {
-                statusLoadEl.style.cursor = 'pointer';
-                statusLoadEl.addEventListener('click', () => {
-                    if (isBrowserFsMode || isOfflineMode) {
-                        const current = statusLoadEl.textContent.trim();
-                        const l = prompt("Enter loader (fabric, forge, neoforge, vanilla):", current);
-                        if (l) {
-                            browserInstanceLoader = l.toLowerCase();
-                            statusLoadEl.innerHTML = `<span style="color:var(--accent);">${l.toLowerCase()}</span>`;
-                            if (isBrowserFsMode) fetchInstanceDataBrowser();
-                        }
-                    }
-                });
             }
 
             // Try to auto-connect to the agent if it is already running
@@ -3146,13 +2636,6 @@
 
         // Fetch all instance details (Agent verify point)
         async function fetchInstanceData() {
-            if (isBrowserFsMode) {
-                await fetchInstanceDataBrowser();
-                return;
-            }
-            if (isOfflineMode) {
-                return;
-            }
             try {
                 const res = await fetch('/api/instance');
                 
@@ -3392,47 +2875,18 @@
             if (activePanel) activePanel.classList.add('active');
 
             if (tabId === 'worlds') {
-                if (isBrowserFsMode) {
-                    loadWorldsBrowser();
-                } else if (isOfflineMode) {
-                    document.getElementById('worlds-grid-container').innerHTML = `
-                        <div style="color:var(--text-secondary); padding:20px;">
-                            Worlds Manager is not available in standalone catalog mode.<br><br>
-                            To manage worlds, please run the Minestaller local agent, or connect your Minecraft folder directly:
-                            <div style="margin-top:12px;">
-                                <button class="btn btn-primary" onclick="selectLocalFolderDirect()">Connect Minecraft Folder</button>
-                            </div>
-                        </div>`;
-                } else if (config.lastMinecraftDir) {
+                if (config.lastMinecraftDir) {
                     loadWorlds(config.lastMinecraftDir);
                 }
             }
             if (tabId === 'porter') {
-                if (isBrowserFsMode || isOfflineMode) {
-                    document.getElementById('panel-porter').innerHTML = `
-                        <div class="card" style="padding:20px; color:var(--text-secondary);">
-                            Minecraft Profile Migrater is not available in browser-direct or offline mode.<br><br>
-                            To migrate profiles, please download and run the Minestaller local agent.
-                        </div>`;
-                } else {
-                    loadPorterDetectedInstances();
-                }
+                loadPorterDetectedInstances();
             }
             if (tabId === 'settings') {
                 renderSettings();
             }
             if (tabId === 'backup') {
-                if (isBrowserFsMode) {
-                    loadBackupsBrowser();
-                } else if (isOfflineMode) {
-                    document.getElementById('panel-backup').innerHTML = `
-                        <div class="card" style="padding:20px; color:var(--text-secondary);">
-                            Backup & Restore requires local access.<br><br>
-                            Please start the Minestaller local agent or connect your Minecraft folder directly.
-                        </div>`;
-                } else {
-                    loadBackups();
-                }
+                loadBackups();
             }
             closeContextPane();
         }
@@ -4111,29 +3565,20 @@
 
         async function runDeleteWorld() {
             try {
-                if (isBrowserFsMode) {
-                    const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
-                    await savesHandle.removeEntry(worldToDeleteDirName, { recursive: true });
-                    closeDeleteWorldConfirmation();
-                    closeContextPane();
-                    await loadWorldsBrowser();
-                    alert("World deleted successfully.");
-                } else {
-                    const res = await fetch('/api/worlds/delete', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            instancePath: currentInstancePath,
-                            worldName: worldToDeleteDirName
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.error) throw new Error(data.error);
-                    closeDeleteWorldConfirmation();
-                    closeContextPane();
-                    await loadWorlds(config.lastMinecraftDir);
-                    alert("World deleted successfully.");
-                }
+                const res = await fetch('/api/worlds/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instancePath: currentInstancePath,
+                        worldName: worldToDeleteDirName
+                    })
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
+                closeDeleteWorldConfirmation();
+                closeContextPane();
+                await loadWorlds(config.lastMinecraftDir);
+                alert("World deleted successfully.");
             } catch (err) {
                 alert("Failed to delete world: " + err.message);
             }
@@ -4143,78 +3588,10 @@
             const settingsPanel = document.getElementById('panel-settings');
             if (!settingsPanel) return;
             
-            if (isBrowserFsMode) {
-                settingsPanel.innerHTML = `
-                    <div class="card">
-                        <div class="card-header"><i class="ti ti-settings"></i> browser direct configuration</div>
-                        <div style="font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
-                            Connected directly via Browser File System: <strong style="color:var(--accent); font-family:var(--font-mono);">${localMinecraftDirHandle.name}</strong><br><br>
-                            To disconnect or link a different directory:
-                            <div style="margin-top: 12px;">
-                                <button class="btn btn-primary" onclick="selectLocalFolderDirect()">Select New Minecraft Folder</button>
-                                <button class="btn" style="margin-left: 8px;" onclick="enableOfflineMode()">Disconnect & Enter Demo Mode</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="card" style="margin-top: 16px;">
-                        <div class="card-header"><i class="ti ti-download"></i> metadata override settings</div>
-                        <div style="font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-                            Configure what Minecraft version and mod loader target are used to resolve addon downloads:
-                        </div>
-                        <div class="form-row">
-                            <div class="form-label">minecraft version</div>
-                            <div style="display: flex; gap: 8px; width: 100%; max-width: 200px; align-items: center;">
-                                <select class="select-input" id="browser-version-override" onchange="updateBrowserVersionOverrideSelect()" style="flex: 1; min-width: 100px;">
-                                    <option value="1.21.1" ${browserInstanceVersion === '1.21.1' ? 'selected' : ''}>1.21.1</option>
-                                    <option value="1.21" ${browserInstanceVersion === '1.21' ? 'selected' : ''}>1.21</option>
-                                    <option value="1.20.4" ${browserInstanceVersion === '1.20.4' ? 'selected' : ''}>1.20.4</option>
-                                    <option value="1.20.1" ${browserInstanceVersion === '1.20.1' ? 'selected' : ''}>1.20.1</option>
-                                    <option value="1.19.4" ${browserInstanceVersion === '1.19.4' ? 'selected' : ''}>1.19.4</option>
-                                    <option value="1.19.2" ${browserInstanceVersion === '1.19.2' ? 'selected' : ''}>1.19.2</option>
-                                    <option value="1.18.2" ${browserInstanceVersion === '1.18.2' ? 'selected' : ''}>1.18.2</option>
-                                    <option value="1.16.5" ${browserInstanceVersion === '1.16.5' ? 'selected' : ''}>1.16.5</option>
-                                    <option value="custom" ${!['1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.16.5'].includes(browserInstanceVersion) ? 'selected' : ''}>Custom...</option>
-                                </select>
-                                <input type="text" class="text-input" id="browser-version-override-custom" value="${!['1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.16.5'].includes(browserInstanceVersion) ? browserInstanceVersion : ''}" style="display: ${!['1.21.1', '1.21', '1.20.4', '1.20.1', '1.19.4', '1.19.2', '1.18.2', '1.16.5'].includes(browserInstanceVersion) ? 'block' : 'none'}; width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;">
-                            </div>
-                        </div>
-                        <div class="form-row" style="margin-top:10px;">
-                            <div class="form-label">mod loader</div>
-                            <select class="select-input" id="browser-loader-override" style="max-width:200px;">
-                                <option value="fabric" ${browserInstanceLoader === 'fabric' ? 'selected' : ''}>fabric</option>
-                                <option value="forge" ${browserInstanceLoader === 'forge' ? 'selected' : ''}>forge</option>
-                                <option value="neoforge" ${browserInstanceLoader === 'neoforge' ? 'selected' : ''}>neoforge</option>
-                                <option value="vanilla" ${browserInstanceLoader === 'vanilla' ? 'selected' : ''}>vanilla (no loader)</option>
-                            </select>
-                        </div>
-                        <div style="margin-top: 16px;">
-                            <button class="btn btn-primary" onclick="saveBrowserOverrides()">save overrides</button>
-                        </div>
-                    </div>
-                `;
-            } else if (isOfflineMode) {
-                settingsPanel.innerHTML = `
-                    <div class="card">
-                        <div class="card-header"><i class="ti ti-settings"></i> standalone / demo mode settings</div>
-                        <div style="font-family: var(--font-sans); font-size: 13px; line-height: 1.5; color: var(--text-secondary);">
-                            Running in Standalone Catalog / Demo Mode.<br><br>
-                            To link a directory directly without installing the agent, click:
-                            <div style="margin-top: 10px;">
-                                <button class="btn btn-primary" onclick="selectLocalFolderDirect()">Connect Minecraft Folder</button>
-                            </div>
-                            <br>
-                            To run with local agent, download the agent files or re-run the connection script in your terminal:
-                            <pre style="background:var(--bg-base); border:1px solid var(--border); padding:8px; border-radius:4px; font-family:var(--font-mono); font-size:11px; margin-top:6px; color:var(--text-primary); user-select:all; white-space:pre-wrap;">powershell -ExecutionPolicy Bypass -Command "irm https://minestaller.vercel.app/connect.ps1 | iex"</pre>
-                        </div>
-                    </div>
-                `;
-            } else {
-                settingsPanel.innerHTML = originalSettingsPanelHtml;
-                document.getElementById('settings-dir-input').value = config.lastMinecraftDir || '';
-                loadCompanionIPs();
-                loadDetectedInstances();
-            }
+            settingsPanel.innerHTML = originalSettingsPanelHtml;
+            document.getElementById('settings-dir-input').value = config.lastMinecraftDir || '';
+            loadCompanionIPs();
+            loadDetectedInstances();
         }
         
         function updateBrowserVersionOverrideSelect() {
@@ -4915,13 +4292,7 @@
             updateQueueFooter();
             mainFrameClearActiveWorld();
 
-            if (isBrowserFsMode) {
-                await installTasksBrowser(tasks);
-            } else if (isOfflineMode) {
-                installTasksOffline(tasks);
-            } else {
-                startInstallationProgress(tasks);
-            }
+            startInstallationProgress(tasks);
         }
 
         async function initiateSingleInstall() {
@@ -4937,13 +4308,7 @@
                 const tasks = await resolveModrinthDownloadTask(selectedProject, targetWorld);
                 if (tasks && tasks.length > 0) {
                     closeContextPane();
-                    if (isBrowserFsMode) {
-                        await installTasksBrowser(tasks);
-                    } else if (isOfflineMode) {
-                        installTasksOffline(tasks);
-                    } else {
-                        startInstallationProgress(tasks);
-                    }
+                    startInstallationProgress(tasks);
                 } else {
                     alert("No compatible version found on Modrinth.");
                 }
