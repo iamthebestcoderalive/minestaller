@@ -2142,6 +2142,12 @@
                 
                 if (project.project_type === 'mod' && loader !== 'any') {
                     loaderMatch = ver.loaders.map(l => l.toLowerCase()).includes(loader);
+                } else if (project.project_type === 'datapack') {
+                    loaderMatch = ver.loaders.map(l => l.toLowerCase()).includes('datapack');
+                    // Fallback: check if the primary file is a zip if loader not explicitly tagged
+                    if (!loaderMatch && ver.files && ver.files.length > 0) {
+                        loaderMatch = ver.files.some(f => f.filename.toLowerCase().endsWith('.zip'));
+                    }
                 }
                 
                 if (gameVerMatch && loaderMatch) {
