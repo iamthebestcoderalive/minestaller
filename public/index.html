@@ -2808,10 +2808,20 @@
             container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:20px;">querying modrinth API database...</div>';
 
             const mcVersion = document.getElementById('status-version').textContent;
-            let facets = `[["project_type:${type}"]]`;
+            
+            const facetsArray = [
+                [`project_type:${type}`]
+            ];
+            
             if (mcVersion && mcVersion !== '--' && mcVersion !== 'Unknown') {
-                facets = `[["project_type:${type}"],["versions:${mcVersion}"]]`;
+                facetsArray.push([`versions:${mcVersion}`]);
             }
+            
+            if (type === 'modpack' && activeInstanceLoader && activeInstanceLoader !== 'Unknown' && activeInstanceLoader !== 'Vanilla') {
+                facetsArray.push([`categories:${activeInstanceLoader.toLowerCase()}`]);
+            }
+            
+            const facets = JSON.stringify(facetsArray);
 
             const offset = (page - 1) * searchLimit;
             const url = `https://api.modrinth.com/v2/search?query=${encodeURIComponent(query)}&facets=${encodeURIComponent(facets)}&limit=${searchLimit}&offset=${offset}`;
