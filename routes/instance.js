@@ -140,6 +140,45 @@ router.get('/api/instance', async (req, res) => {
             } catch (err) {}
         }
 
+        // Fallback 1: Parse Minecraft version from latest.log if still Unknown
+        if (mcVersion === "Unknown") {
+            const logPath = path.join(instancePath, 'logs', 'latest.log');
+            if (fs.existsSync(logPath)) {
+                try {
+                    const content = fs.readFileSync(logPath, 'utf8');
+                    // Fabric signature: "Loading Minecraft 1.20.1 with Fabric Loader"
+                    const fabricMatch = content.match(/Loading Minecraft ([0-9\.]+) with Fabric Loader/i);
+                    if (fabricMatch) {
+                        mcVersion = fabricMatch[1];
+                        if (loaderType === "Unknown") loaderType = "Fabric";
+                    }
+                    
+                    // Forge/General signatures
+                    if (mcVersion === "Unknown") {
+                        const forgeMcMatch = content.match(/Minecraft Version: ([0-9\.]+)/i);
+                        if (forgeMcMatch) {
+                            mcVersion = forgeMcMatch[1];
+                        }
+                    }
+                    if (mcVersion === "Unknown") {
+                        const genericMatch = content.match(/Loading Minecraft ([0-9\.]+)/i);
+                        if (genericMatch) {
+                            mcVersion = genericMatch[1];
+                        }
+                    }
+                } catch (e) {}
+            }
+        }
+
+        // Fallback 2: Parse Minecraft version from the folder name itself if still Unknown
+        if (mcVersion === "Unknown") {
+            const dirName = path.basename(instancePath);
+            const versionMatch = dirName.match(/\b(1\.\d+(\.\d+)?)\b/);
+            if (versionMatch) {
+                mcVersion = versionMatch[1];
+            }
+        }
+
         // modpack checking & dynamic icon resolving
         let modpack = { detected: false };
         if (fs.existsSync(GLOBAL_CONFIG_PATH)) {
