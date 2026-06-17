@@ -1156,7 +1156,6 @@
             opacity: 1 !important;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -1349,30 +1348,6 @@
                             <option value="datapack">datapacks</option>
                         </select>
                         <button class="btn btn-primary" onclick="performSearch()">search</button>
-                    </div>
-                    <div id="offline-selectors-row" style="display: none; margin-top: 12px; gap: 12px; align-items: center; font-size: 12px; font-family: var(--font-sans);">
-                        <span style="color: var(--text-secondary);">Minecraft Version:</span>
-                        <select class="select-input" id="search-version-filter" style="width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" onchange="onVersionFilterSelectChange()">
-                            <option value="1.21.1">1.21.1</option>
-                            <option value="1.21">1.21</option>
-                            <option value="1.20.4">1.20.4</option>
-                            <option value="1.20.1" selected>1.20.1</option>
-                            <option value="1.19.4">1.19.4</option>
-                            <option value="1.19.2">1.19.2</option>
-                            <option value="1.18.2">1.18.2</option>
-                            <option value="1.16.5">1.16.5</option>
-                            <option value="custom">Custom...</option>
-                        </select>
-                        <input type="text" class="text-input" id="search-version-filter-custom" style="display: none; width: 100px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" placeholder="e.g. 1.20.1" onchange="updateSearchFilters()">
-                        
-                        <span style="color: var(--text-secondary); margin-left: 8px;">Loader:</span>
-                        <select class="select-input" id="search-loader-filter" style="width: 150px; padding: 4px 8px; font-size: 12px; border-radius: 4px;" onchange="updateSearchFilters()">
-                            <option value="fabric">fabric</option>
-                            <option value="forge">forge</option>
-                            <option value="neoforge">neoforge</option>
-                            <option value="quilt">quilt</option>
-                            <option value="vanilla">vanilla (no loader)</option>
-                        </select>
                     </div>
                 </div>
 
@@ -1667,7 +1642,7 @@
             <!-- Platform Tabs -->
             <div style="display: flex; gap: 6px; border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 4px;">
                 <button class="tab-btn active" role="tab" id="tab-connect-universal" onclick="switchConnectTab('universal')" style="padding: 6px 12px; font-size: 11px;">
-                    <i class="ti ti-activity"></i> Universal (Recommended)
+                    <i class="ti ti-activity"></i> Universal
                 </button>
                 <button class="tab-btn" role="tab" id="tab-connect-windows" onclick="switchConnectTab('windows')" style="padding: 6px 12px; font-size: 11px;">
                     <i class="ti ti-brand-windows"></i> Windows
@@ -1733,12 +1708,12 @@
                 minestaller // welcome
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.6; text-align: left; padding: 14px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
-                <strong style="color:var(--text-primary);">Select your connection method:</strong><br><br>
-                • <strong>Use Agent (Recommended)</strong>: Connects via a lightweight local companion. Best for standard installations, as it bypasses browser sandbox blocks on default folders like AppData.
+                <strong style="color:var(--text-primary);">Connect via Minestaller Agent:</strong><br><br>
+                The local agent allows Minestaller to manage your Minecraft installation safely and bypass browser security blocks on system folders like AppData.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="actionContinueStartup()">
-                    Continue (Use Agent)
+                    Connect to Agent
                 </button>
             </div>
         </div>
@@ -1752,11 +1727,11 @@
             </div>
             <div style="font-family: var(--font-sans); font-size: 13px; color: var(--text-secondary); line-height: 1.5; text-align: left; padding: 16px; background: var(--bg-base); border: 1px solid var(--border); border-radius: 6px;">
                 <strong style="color:var(--text-primary);">Helper agent is offline.</strong><br><br>
-                • <strong>Connect Agent (Recommended)</strong> to manage your default Minecraft path without browser sandbox blocks.
+                Please start the Minestaller agent on your computer to manage your Minecraft installation and download addons.
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <button class="action-btn btn-primary" style="width: 100%; font-weight: bold; text-transform: none;" onclick="openConnectDeviceModal()">
-                    <i class="ti ti-device-laptop" style="margin-right: 6px;"></i> Connect With Device (Agent)
+                    <i class="ti ti-device-laptop" style="margin-right: 6px;"></i> Setup Agent Connection
                 </button>
             </div>
             <div style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim); display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;">
@@ -1905,247 +1880,8 @@
         };
 
         // ==========================================
-        // Lifecycle Handlers & Scan Init
+        // Module 2: Lifecycle Handlers & Scan Init
         // ==========================================
-        class BrowserNbtReader {
-            constructor(arrayBuffer) {
-                this.view = new DataView(arrayBuffer);
-                this.offset = 0;
-            }
-            readByte() {
-                const val = this.view.getInt8(this.offset);
-                this.offset += 1;
-                return val;
-            }
-            readShort() {
-                const val = this.view.getInt16(this.offset, false);
-                this.offset += 2;
-                return val;
-            }
-            readInt() {
-                const val = this.view.getInt32(this.offset, false);
-                this.offset += 4;
-                return val;
-            }
-            readLong() {
-                const high = this.view.getInt32(this.offset, false);
-                const low = this.view.getInt32(this.offset + 4, false);
-                this.offset += 8;
-                return high * 4294967296 + (low >>> 0);
-            }
-            readFloat() {
-                const val = this.view.getFloat32(this.offset, false);
-                this.offset += 4;
-                return val;
-            }
-            readDouble() {
-                const val = this.view.getFloat64(this.offset, false);
-                this.offset += 8;
-                return val;
-            }
-            readString() {
-                const len = this.readShort();
-                const decoder = new TextDecoder('utf-8');
-                const str = decoder.decode(new Uint8Array(this.view.buffer, this.offset, len));
-                this.offset += len;
-                return str;
-            }
-            readTagPayload(type) {
-                switch (type) {
-                    case 0: return null;
-                    case 1: return this.readByte();
-                    case 2: return this.readShort();
-                    case 3: return this.readInt();
-                    case 4: return this.readLong();
-                    case 5: return this.readFloat();
-                    case 6: return this.readDouble();
-                    case 7: {
-                        const len = this.readInt();
-                        const arr = new Uint8Array(this.view.buffer, this.offset, len);
-                        this.offset += len;
-                        return arr;
-                    }
-                    case 8: return this.readString();
-                    case 9: {
-                        const subType = this.readByte();
-                        const len = this.readInt();
-                        const list = [];
-                        for (let i = 0; i < len; i++) {
-                            list.push(this.readTagPayload(subType));
-                        }
-                        return { type: subType, value: list };
-                    }
-                    case 10: {
-                        const compound = {};
-                        while (true) {
-                            const subType = this.readByte();
-                            if (subType === 0) break;
-                            const name = this.readString();
-                            compound[name] = { type: subType, value: this.readTagPayload(subType) };
-                        }
-                        return compound;
-                    }
-                    case 11: {
-                        const len = this.readInt();
-                        const arr = [];
-                        for (let i = 0; i < len; i++) {
-                            arr.push(this.readInt());
-                        }
-                        return arr;
-                    }
-                    case 12: {
-                        const len = this.readInt();
-                        const arr = [];
-                        for (let i = 0; i < len; i++) {
-                            arr.push(this.readLong());
-                        }
-                        return arr;
-                    }
-                    default:
-                        throw new Error("Unknown NBT tag type: " + type);
-                }
-            }
-            readRoot() {
-                const type = this.readByte();
-                if (type !== 10) {
-                    throw new Error("Expected root Compound tag, got " + type);
-                }
-                const name = this.readString();
-                const value = this.readTagPayload(10);
-                return { name, type, value };
-            }
-        }
-
-        function parseBrowserNBT(arrayBuffer) {
-            const reader = new BrowserNbtReader(arrayBuffer);
-            return reader.readRoot();
-        }
-
-        async function downloadAgentZip() {
-            try {
-                let host = window.location.origin;
-                const isLocal = window.location.hostname === 'localhost' || 
-                                window.location.hostname === '127.0.0.1' || 
-                                window.location.hostname === '[::1]' || 
-                                window.location.protocol === 'file:';
-
-                if (isLocal) {
-                    alert("Since you are running Minestaller locally, you already have the agent files on your PC! Just open your 'minestaller' folder and run node server.js (or double-click start.bat).");
-                    return;
-                }
-
-                const serverJsRes = await originalFetch(host + '/server.js');
-                const packageJsonRes = await originalFetch(host + '/package.json');
-                
-                if (!serverJsRes.ok || !packageJsonRes.ok) {
-                    throw new Error("Unable to fetch agent files from origin server.");
-                }
-                
-                const serverJs = await serverJsRes.text();
-                const packageJson = await packageJsonRes.text();
-                const startBat = `@echo off\r\necho Installing dependencies...\r\ncall npm install\r\necho Starting agent...\r\nnode server.js\r\npause\r\n`;
-
-                function crc32(str) {
-                    let table = [];
-                    for (let i = 0; i < 256; i++) {
-                        let c = i;
-                        for (let j = 0; j < 8; j++) {
-                            c = ((c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
-                        }
-                        table[i] = c;
-                    }
-                    let crc = 0 ^ (-1);
-                    for (let i = 0; i < str.length; i++) {
-                        crc = (crc >>> 8) ^ table[(crc ^ str.charCodeAt(i)) & 0xFF];
-                    }
-                    return (crc ^ (-1)) >>> 0;
-                }
-
-                function makeZip(files) {
-                    let LDATA = [];
-                    let CDATA = [];
-                    let offset = 0;
-                    
-                    for (let [filename, content] of Object.entries(files)) {
-                        let filenameBuf = new TextEncoder().encode(filename);
-                        let contentBuf = new TextEncoder().encode(content);
-                        let crc = crc32(content);
-                        let size = contentBuf.length;
-                        
-                        // Local file header
-                        let lHeader = new Uint8Array(30 + filenameBuf.length);
-                        lHeader.set([0x50, 0x4B, 0x03, 0x04]);
-                        lHeader.set([10, 0], 4);
-                        lHeader.set([0, 0], 6);
-                        lHeader.set([0, 0], 8);
-                        lHeader.set([0, 0, 0, 0], 10);
-                        lHeader.set([crc & 0xFF, (crc >> 8) & 0xFF, (crc >> 16) & 0xFF, (crc >> 24) & 0xFF], 14);
-                        lHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 18);
-                        lHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 22);
-                        lHeader.set([filenameBuf.length & 0xFF, (filenameBuf.length >> 8) & 0xFF], 26);
-                        lHeader.set([0, 0], 28);
-                        lHeader.set(filenameBuf, 30);
-                        
-                        LDATA.push(lHeader, contentBuf);
-                        
-                        // Central directory header
-                        let cHeader = new Uint8Array(46 + filenameBuf.length);
-                        cHeader.set([0x50, 0x4B, 0x01, 0x02]);
-                        cHeader.set([20, 0], 4);
-                        cHeader.set([10, 0], 6);
-                        cHeader.set([0, 0], 8);
-                        cHeader.set([0, 0], 10);
-                        cHeader.set([0, 0, 0, 0], 12);
-                        cHeader.set([crc & 0xFF, (crc >> 8) & 0xFF, (crc >> 16) & 0xFF, (crc >> 24) & 0xFF], 16);
-                        cHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 20);
-                        cHeader.set([size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF], 24);
-                        cHeader.set([filenameBuf.length & 0xFF, (filenameBuf.length >> 8) & 0xFF], 28);
-                        cHeader.set([0, 0], 30);
-                        cHeader.set([0, 0], 32);
-                        cHeader.set([0, 0], 34);
-                        cHeader.set([0, 0], 36);
-                        cHeader.set([0, 0, 0, 0], 38);
-                        cHeader.set([offset & 0xFF, (offset >> 8) & 0xFF, (offset >> 16) & 0xFF, (offset >> 24) & 0xFF], 42);
-                        cHeader.set(filenameBuf, 46);
-                        
-                        CDATA.push(cHeader);
-                        offset += lHeader.length + contentBuf.length;
-                    }
-                    
-                    let cDataLen = CDATA.reduce((a, b) => a + b.length, 0);
-                    let eocd = new Uint8Array(22);
-                    eocd.set([0x50, 0x4B, 0x05, 0x06]);
-                    eocd.set([0, 0], 4);
-                    eocd.set([0, 0], 6);
-                    eocd.set([Object.keys(files).length & 0xFF, (Object.keys(files).length >> 8) & 0xFF], 8);
-                    eocd.set([Object.keys(files).length & 0xFF, (Object.keys(files).length >> 8) & 0xFF], 10);
-                    eocd.set([cDataLen & 0xFF, (cDataLen >> 8) & 0xFF, (cDataLen >> 16) & 0xFF, (cDataLen >> 24) & 0xFF], 12);
-                    eocd.set([offset & 0xFF, (offset >> 8) & 0xFF, (offset >> 16) & 0xFF, (offset >> 24) & 0xFF], 16);
-                    eocd.set([0, 0], 20);
-                    
-                    let parts = [...LDATA, ...CDATA, eocd];
-                    return new Blob(parts, { type: 'application/zip' });
-                }
-
-                const zipBlob = makeZip({
-                    'server.js': serverJs,
-                    'package.json': packageJson,
-                    'start.bat': startBat
-                });
-                
-                const url = URL.createObjectURL(zipBlob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'minestaller-agent.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            } catch (e) {
-                alert("Failed to download agent helper: " + e.message);
-            }
-        }
-
         let config = { lastMinecraftDir: "", instances: {} };
 
         let originalSettingsPanelHtml = '';
@@ -2493,62 +2229,38 @@
             const loadFilt = document.getElementById('search-loader-filter');
             
             if (selectVer) {
-                // Check if browserInstanceVersion is a predefined option
+                // Check if mcVersion is a predefined option
                 let isPredefined = false;
+                const currentMcVersion = document.getElementById('status-version').textContent;
                 for (let i = 0; i < selectVer.options.length; i++) {
-                    if (selectVer.options[i].value === browserInstanceVersion) {
+                    if (selectVer.options[i].value === currentMcVersion) {
                         isPredefined = true;
                         break;
                     }
                 }
                 
                 if (isPredefined) {
-                    selectVer.value = browserInstanceVersion;
+                    selectVer.value = currentMcVersion;
                     if (customVerInput) customVerInput.style.display = 'none';
                 } else {
                     selectVer.value = 'custom';
                     if (customVerInput) {
                         customVerInput.style.display = 'inline-block';
-                        customVerInput.value = browserInstanceVersion;
+                        customVerInput.value = currentMcVersion;
                     }
                 }
             }
             
             if (loadFilt) {
-                loadFilt.value = browserInstanceLoader;
+                const currentLoader = document.getElementById('status-loader').textContent.trim().toLowerCase();
+                loadFilt.value = currentLoader;
             }
         }
 
         function updateSearchFilters() {
-            const selectVer = document.getElementById('search-version-filter');
-            const customVerInput = document.getElementById('search-version-filter-custom');
-            let v = '1.20.1';
-            if (selectVer) {
-                v = selectVer.value;
-                if (v === 'custom' && customVerInput) {
-                    v = customVerInput.value.trim() || '1.20.1';
-                }
-            }
-            const l = document.getElementById('search-loader-filter') ? document.getElementById('search-loader-filter').value : 'fabric';
-            
-            if (v) {
-                browserInstanceVersion = v;
-                const statusVer = document.getElementById('status-version');
-                if (statusVer) statusVer.textContent = v;
-                const statVerEl = document.getElementById('stat-version');
-                if (statVerEl) statVerEl.textContent = v;
-            }
-            if (l) {
-                browserInstanceLoader = l;
-                const statusLoader = document.getElementById('status-loader');
-                if (statusLoader) statusLoader.innerHTML = `<span style="color:var(--accent);">${l}</span>`;
-            }
             performSearch();
         }
 
-        // ==========================================
-        // Client-Side Browser Direct File System Handlers
-        // ==========================================
         // Path truncation helper (show only last folder name)
         function truncatePath(fullPath) {
             if (!fullPath) return '--';
@@ -3241,529 +2953,6 @@
                 loadBackups();
             } catch (err) {
                 alert("Failed to delete backup: " + err.message);
-            }
-        }
-
-        // ==========================================
-        // Client-Side Browser Direct Worlds & Backups Controller
-        // ==========================================
-        async function loadWorldsBrowser() {
-            try {
-                const grid = document.getElementById('worlds-grid-container');
-                grid.innerHTML = '<div style="color:var(--text-secondary); padding:20px;">reading saves directory...</div>';
-                
-                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves', { create: false });
-                const worldsList = [];
-                
-                for await (const entry of savesHandle.values()) {
-                    if (entry.kind === 'directory') {
-                        try {
-                            const worldDirHandle = entry;
-                            const levelDatHandle = await worldDirHandle.getFileHandle('level.dat', { create: false });
-                            
-                            const wi = {
-                                directoryName: entry.name,
-                                levelName: entry.name,
-                                gameType: 0,
-                                difficulty: 2,
-                                hardcore: false,
-                                allowCommands: false,
-                                isCorrupted: false
-                            };
-                            
-                            try {
-                                const file = await levelDatHandle.getFile();
-                                const ds = new DecompressionStream('gzip');
-                                const decompressedStream = new Response(file.stream().pipeThrough(ds));
-                                const decompressedBlob = await decompressedStream.blob();
-                                const decompressedBuf = await decompressedBlob.arrayBuffer();
-                                
-                                const rootNbt = parseBrowserNBT(decompressedBuf);
-                                const data = rootNbt.value.Data;
-                                if (data) {
-                                    wi.levelName = data.value.LevelName ? data.value.LevelName.value : entry.name;
-                                    wi.gameType = data.value.GameType ? data.value.GameType.value : 0;
-                                    wi.difficulty = data.value.Difficulty ? data.value.Difficulty.value : 2;
-                                    wi.hardcore = data.value.hardcore ? data.value.hardcore.value === 1 : false;
-                                    wi.allowCommands = data.value.allowCommands ? data.value.allowCommands.value === 1 : false;
-                                }
-                            } catch (err) {
-                                console.error("NBT error for: " + entry.name, err);
-                                wi.levelName = entry.name + " (Read Error)";
-                                wi.isCorrupted = true;
-                            }
-                            worldsList.push(wi);
-                        } catch (err) {
-                            // level.dat not found
-                        }
-                    }
-                }
-                
-                worlds = worldsList;
-                
-                if (worlds.length === 0) {
-                    grid.innerHTML = '<div style="color:var(--text-secondary); padding:20px;">no saves worlds detected in folder.</div>';
-                    return;
-                }
-
-                grid.innerHTML = worlds.map(w => `
-                    <div class="world-card ${activeWorld && activeWorld.directoryName === w.directoryName ? 'selected' : ''}" onclick="selectWorldBrowser('${w.directoryName}')">
-                        <div class="world-card-name">${w.levelName}</div>
-                        <div class="world-card-meta">folder: ${w.directoryName}</div>
-                        <div class="world-card-meta">mode: ${w.isCorrupted ? 'corrupted' : getGameModeName(w.gameType)}</div>
-                    </div>
-                `).join('');
-            } catch (e) {
-                console.error("Failed to load worlds browser", e);
-                document.getElementById('worlds-grid-container').innerHTML = `<div style="color:var(--warning); padding:20px;">Failed to access saves folder: ${e.message}</div>`;
-            }
-        }
-
-        function selectWorldBrowser(dirName) {
-            const world = worlds.find(w => w.directoryName === dirName);
-            if (!world) return;
-
-            activeWorld = world;
-            
-            const cards = document.querySelectorAll('.world-card');
-            cards.forEach(c => c.classList.remove('selected'));
-            
-            // Highlight selected card
-            const grid = document.getElementById('worlds-grid-container');
-            if (grid) {
-                const cardElements = grid.querySelectorAll('.world-card');
-                cardElements.forEach(c => {
-                    const meta = c.querySelector('.world-card-meta');
-                    if (meta && meta.textContent.includes(dirName)) {
-                        c.classList.add('selected');
-                    }
-                });
-            }
-
-            const content = document.getElementById('context-content');
-            content.innerHTML = `
-                <div class="context-header">
-                    <div class="context-title">world settings</div>
-                </div>
-                <div class="card" style="margin-top:12px;">
-                    <div class="card-header"><i class="ti ti-settings-2"></i> metadata configuration</div>
-                    <div style="font-size:11px; color:var(--warning); margin-bottom:8px; font-family:var(--font-sans);">
-                        * World settings are read-only in Browser Direct mode.
-                    </div>
-                    <div class="form-row">
-                        <div class="form-label">world name</div>
-                        <input type="text" class="text-input" value="${world.levelName}" disabled>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-label">game mode</div>
-                        <select class="select-input" disabled>
-                            <option value="0" ${world.gameType === 0 ? 'selected' : ''}>survival</option>
-                            <option value="1" ${world.gameType === 1 ? 'selected' : ''}>creative</option>
-                            <option value="2" ${world.gameType === 2 ? 'selected' : ''}>adventure</option>
-                            <option value="3" ${world.gameType === 3 ? 'selected' : ''}>spectator</option>
-                        </select>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-label">difficulty</div>
-                        <select class="select-input" disabled>
-                            <option value="0" ${world.difficulty === 0 ? 'selected' : ''}>peaceful</option>
-                            <option value="1" ${world.difficulty === 1 ? 'selected' : ''}>easy</option>
-                            <option value="2" ${world.difficulty === 2 ? 'selected' : ''}>normal</option>
-                            <option value="3" ${world.difficulty === 3 ? 'selected' : ''}>hard</option>
-                        </select>
-                    </div>
-                    <div class="check-row">
-                        <input type="checkbox" class="check-input" ${world.allowCommands ? 'checked' : ''} disabled>
-                        <span class="form-label" style="text-transform:lowercase;">allow cheats</span>
-                    </div>
-                    <div class="check-row">
-                        <input type="checkbox" class="check-input" ${world.hardcore ? 'checked' : ''} disabled>
-                        <span class="form-label" style="text-transform:lowercase;">hardcore mode</span>
-                    </div>
-                    <div style="margin-top:10px;">
-                        <button class="btn btn-warning btn-danger" onclick="deleteWorldConfirm('${world.directoryName}', '${world.levelName.replace(/'/g, "\\'")}')" style="border-color:#ef4444; color:#ef4444;">delete world</button>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top:12px;">
-                    <div class="card-header"><i class="ti ti-download"></i> datapack installer</div>
-                    <div class="datapacks-container">
-                        <div class="form-label">installed datapacks</div>
-                        <div class="datapacks-list" id="world-datapacks-list">
-                            <div style="color:var(--text-secondary); text-align:center; padding-top:20px;">loading datapacks...</div>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; margin-top:8px;">
-                            <input type="file" multiple id="local-datapack-file" style="display:none;" onchange="uploadLocalDatapacksBrowser(this)">
-                            <button class="btn" onclick="document.getElementById('local-datapack-file').click()">upload file(s)</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            openContextPane();
-            loadWorldDatapacksBrowser(world.directoryName);
-        }
-
-        async function loadWorldDatapacksBrowser(worldName) {
-            try {
-                const listDiv = document.getElementById('world-datapacks-list');
-                listDiv.innerHTML = '';
-                
-                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
-                const worldHandle = await savesHandle.getDirectoryHandle(worldName);
-                
-                let datapacksHandle;
-                try {
-                    datapacksHandle = await worldHandle.getDirectoryHandle('datapacks', { create: false });
-                } catch (e) {
-                    listDiv.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">no datapacks installed.</div>';
-                    return;
-                }
-                
-                const items = [];
-                for await (const entry of datapacksHandle.values()) {
-                    items.push({
-                        name: entry.name,
-                        type: entry.kind === 'directory' ? 'Folder' : 'ZIP'
-                    });
-                }
-                
-                if (items.length === 0) {
-                    listDiv.innerHTML = '<div style="color:var(--text-dim); text-align:center; padding:10px;">no datapacks installed.</div>';
-                    return;
-                }
-                
-                listDiv.innerHTML = items.map(item => `
-                    <div class="datapack-row" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-sub); padding:4px 0;">
-                        <div class="datapack-info" style="display:flex; gap:6px; align-items:center;">
-                            <span class="badge" style="font-size:9px; background:var(--border);">${item.type}</span>
-                            <span class="datapack-name" title="${item.name}">${item.name}</span>
-                        </div>
-                        <span class="datapack-action-del" onclick="deleteDatapackBrowser('${worldName}', '${item.name.replace(/'/g, "\\'")}')" style="color:#ef4444; font-weight:bold; cursor:pointer; font-size:12px; padding:0 4px;">x</span>
-                    </div>
-                `).join('');
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        async function deleteDatapackBrowser(worldName, name) {
-            if (!confirm(`Permanently delete datapack "${name}"?`)) return;
-            try {
-                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
-                const worldHandle = await savesHandle.getDirectoryHandle(worldName);
-                const datapacksHandle = await worldHandle.getDirectoryHandle('datapacks');
-                await datapacksHandle.removeEntry(name, { recursive: true });
-                await loadWorldDatapacksBrowser(worldName);
-            } catch (e) {
-                alert("Failed to delete datapack: " + e.message);
-            }
-        }
-
-        async function uploadLocalDatapacksBrowser(input) {
-            if (!input.files || input.files.length === 0) return;
-            try {
-                const savesHandle = await localMinecraftDirHandle.getDirectoryHandle('saves');
-                const worldHandle = await savesHandle.getDirectoryHandle(activeWorld.directoryName);
-                const datapacksHandle = await worldHandle.getDirectoryHandle('datapacks', { create: true });
-                
-                for (const file of input.files) {
-                    const fileHandle = await datapacksHandle.getFileHandle(file.name, { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(file);
-                    await writable.close();
-                }
-                await loadWorldDatapacksBrowser(activeWorld.directoryName);
-                alert("Datapack(s) uploaded successfully.");
-            } catch (e) {
-                alert("Failed to upload datapacks: " + e.message);
-            }
-        }
-
-        async function loadBackupsBrowser() {
-            const container = document.getElementById('backup-list-container');
-            if (!container) return;
-            
-            const pathDisplay = document.getElementById('backup-path-display');
-            if (pathDisplay) {
-                pathDisplay.textContent = "Browser File Handle / minestaller_backups";
-            }
-            
-            try {
-                let backupsHandle;
-                try {
-                    backupsHandle = await localMinecraftDirHandle.getDirectoryHandle('minestaller_backups', { create: false });
-                } catch (e) {
-                    container.innerHTML = '<div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>';
-                    return;
-                }
-
-                const backups = [];
-                for await (const entry of backupsHandle.values()) {
-                    if (entry.kind === 'file' && entry.name.endsWith('.zip')) {
-                        const file = await entry.getFile();
-                        backups.push({
-                            filename: entry.name,
-                            sizeMB: (file.size / (1024 * 1024)).toFixed(1),
-                            createdAt: file.lastModified
-                        });
-                    }
-                }
-
-                if (backups.length === 0) {
-                    container.innerHTML = '<div style="color:var(--text-secondary); padding:20px; text-align: center;">no backups created yet.</div>';
-                    return;
-                }
-
-                container.innerHTML = backups.map(b => {
-                    const date = new Date(b.createdAt).toLocaleString();
-                    return `
-                        <div class="list-row" style="background: var(--bg-base); border: 1px solid var(--border-sub); padding: 8px 12px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
-                            <div style="display: flex; flex-direction: column; gap: 2px; overflow: hidden; min-width: 0; flex: 1;">
-                                <div style="font-family: var(--font-mono); font-size: 11px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary);" title="${b.filename}">
-                                    ${b.filename}
-                                </div>
-                                <div style="font-size: 10px; color: var(--text-dim); display: flex; gap: 8px; align-items: center;">
-                                    <span>${date}</span>
-                                    <span style="color: var(--accent); font-weight: bold;">${b.sizeMB} MB</span>
-                                </div>
-                            </div>
-                            <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                                <button class="btn" style="padding: 4px 8px; font-size: 11px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" onclick="deleteBackupBrowser('${b.filename.replace(/'/g, "\\'")}')">
-                                    <i class="ti ti-trash"></i> delete
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            } catch (err) {
-                console.error("Failed to load backups browser", err);
-                container.innerHTML = `<div style="color: #ef4444; padding:20px; text-align: center;">Error: ${err.message}</div>`;
-            }
-        }
-
-        async function deleteBackupBrowser(filename) {
-            if (!confirm(`Are you sure you want to permanently delete the backup: ${filename}?`)) return;
-            try {
-                const backupsHandle = await localMinecraftDirHandle.getDirectoryHandle('minestaller_backups');
-                await backupsHandle.removeEntry(filename);
-                await loadBackupsBrowser();
-            } catch (e) {
-                alert("Failed to delete backup: " + e.message);
-            }
-        }
-
-        function deleteWorldConfirm(dirName, levelName) {
-            worldToDeleteDirName = dirName;
-            worldToDeleteLevelName = levelName;
-            document.getElementById('delete-world-label').textContent = levelName;
-            document.getElementById('confirm-delete-world-overlay').style.display = 'flex';
-        }
-
-        function closeDeleteWorldConfirmation() {
-            document.getElementById('confirm-delete-world-overlay').style.display = 'none';
-        }
-
-        async function runDeleteWorld() {
-            try {
-                const res = await fetch('/api/worlds/delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        instancePath: currentInstancePath,
-                        worldName: worldToDeleteDirName
-                    })
-                });
-                const data = await res.json();
-                if (data.error) throw new Error(data.error);
-                closeDeleteWorldConfirmation();
-                closeContextPane();
-                await loadWorlds(config.lastMinecraftDir);
-                alert("World deleted successfully.");
-            } catch (err) {
-                alert("Failed to delete world: " + err.message);
-            }
-        }
-
-        function renderSettings() {
-            const settingsPanel = document.getElementById('panel-settings');
-            if (!settingsPanel) return;
-            
-            settingsPanel.innerHTML = originalSettingsPanelHtml;
-            document.getElementById('settings-dir-input').value = config.lastMinecraftDir || '';
-            loadCompanionIPs();
-            loadDetectedInstances();
-        }
-        
-        function updateBrowserVersionOverrideSelect() {
-            const selectEl = document.getElementById('browser-version-override');
-            const customEl = document.getElementById('browser-version-override-custom');
-            if (selectEl && customEl) {
-                if (selectEl.value === 'custom') {
-                    customEl.style.display = 'block';
-                    customEl.focus();
-                } else {
-                    customEl.style.display = 'none';
-                }
-            }
-        }
-
-        function saveBrowserOverrides() {
-            const selectVer = document.getElementById('browser-version-override');
-            const customVerInput = document.getElementById('browser-version-override-custom');
-            let v = '1.20.1';
-            if (selectVer) {
-                v = selectVer.value;
-                if (v === 'custom' && customVerInput) {
-                    v = customVerInput.value.trim() || '1.20.1';
-                }
-            }
-            browserInstanceVersion = v;
-            browserInstanceLoader = document.getElementById('browser-loader-override').value || 'fabric';
-            fetchInstanceDataBrowser();
-            alert("Metadata override settings saved successfully.");
-        }
-
-        function triggerDownload(url, filename) {
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
-
-        async function installTasksOffline(tasks) {
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('btn-cancel-install').disabled = true;
-            document.getElementById('btn-close-progress').disabled = true;
-            document.getElementById('progress-fill-bar').style.width = '0%';
-            document.getElementById('progress-text-pct').textContent = '0%';
-            document.getElementById('progress-phase-label').textContent = 'step: preparing ZIP package';
-            
-            const consoleLogs = document.getElementById('progress-console-logs');
-            consoleLogs.innerHTML = '';
-
-            function log(msg) {
-                consoleLogs.innerHTML += `<div>${msg}</div>`;
-                consoleLogs.scrollTop = consoleLogs.scrollHeight;
-            }
-
-            try {
-                const zip = new JSZip();
-                let count = 0;
-                
-                for (const task of tasks) {
-                    log(`[DOWNLOAD] Fetching: ${task.filename}...`);
-                    const res = await fetch(task.downloadUrl);
-                    if (!res.ok) throw new Error(`Failed to download ${task.filename}: ${res.statusText}`);
-                    
-                    const arrayBuffer = await res.arrayBuffer();
-                    
-                    let zipPath = task.filename;
-                    if (task.targetFolder) {
-                        zipPath = `${task.targetFolder}/${task.filename}`;
-                    } else {
-                        if (task.filename.endsWith('.mrpack')) {
-                            zipPath = `modpacks/${task.filename}`;
-                        } else {
-                            zipPath = `mods/${task.filename}`;
-                        }
-                    }
-                    
-                    log(`[ZIP] Packaging: ${zipPath}`);
-                    zip.file(zipPath, arrayBuffer);
-                    
-                    count++;
-                    const pct = Math.round((count / tasks.length) * 85);
-                    document.getElementById('progress-fill-bar').style.width = `${pct}%`;
-                    document.getElementById('progress-text-pct').textContent = `${pct}%`;
-                }
-                
-                log(`[ZIP] Generating ZIP package...`);
-                document.getElementById('progress-phase-label').textContent = 'step: building ZIP archive';
-                
-                const blob = await zip.generateAsync({ type: 'blob' }, (metadata) => {
-                    const pct = Math.round(85 + (metadata.percent * 0.15));
-                    document.getElementById('progress-fill-bar').style.width = `${pct}%`;
-                    document.getElementById('progress-text-pct').textContent = `${pct}%`;
-                });
-                
-                log(`[SUCCESS] ZIP compiled successfully!`);
-                const downloadUrl = URL.createObjectURL(blob);
-                triggerDownload(downloadUrl, 'minestaller_addons.zip');
-                URL.revokeObjectURL(downloadUrl);
-                
-                document.getElementById('progress-phase-label').textContent = 'step: download completed';
-                document.getElementById('progress-fill-bar').style.width = '100%';
-                document.getElementById('progress-text-pct').textContent = '100%';
-                log(`[SUCCESS] ZIP download started. Please extract it inside your Minecraft directory!`);
-                document.getElementById('btn-close-progress').disabled = false;
-            } catch (err) {
-                log(`[ERROR] Packaging failed: ${err.message}`);
-                document.getElementById('progress-phase-label').textContent = 'step: compilation failed';
-                document.getElementById('btn-close-progress').disabled = false;
-            }
-        }
-
-        async function installTasksBrowser(tasks) {
-            document.getElementById('overlay').style.display = 'flex';
-            document.getElementById('btn-cancel-install').disabled = true;
-            document.getElementById('btn-close-progress').disabled = true;
-            document.getElementById('progress-fill-bar').style.width = '0%';
-            document.getElementById('progress-text-pct').textContent = '0%';
-            document.getElementById('progress-phase-label').textContent = 'step: downloading files directly via browser';
-            
-            const consoleLogs = document.getElementById('progress-console-logs');
-            consoleLogs.innerHTML = '';
-
-            function log(msg) {
-                consoleLogs.innerHTML += `<div>${msg}</div>`;
-                consoleLogs.scrollTop = consoleLogs.scrollHeight;
-            }
-
-            try {
-                let count = 0;
-                for (const task of tasks) {
-                    log(`[DOWNLOAD] Fetching: ${task.filename}...`);
-                    const res = await fetch(task.downloadUrl);
-                    if (!res.ok) throw new Error(`Failed to download ${task.filename}: ${res.statusText}`);
-                    
-                    const arrayBuffer = await res.arrayBuffer();
-                    log(`[WRITE] Saving ${task.filename} to ${task.targetFolder || 'mods'}/...`);
-                    
-                    let parentHandle = localMinecraftDirHandle;
-                    if (task.targetFolder) {
-                        const pathParts = task.targetFolder.split('/');
-                        for (const part of pathParts) {
-                            if (part) {
-                                parentHandle = await parentHandle.getDirectoryHandle(part, { create: true });
-                            }
-                        }
-                    } else {
-                        parentHandle = await localMinecraftDirHandle.getDirectoryHandle('mods', { create: true });
-                    }
-                    
-                    const fileHandle = await parentHandle.getFileHandle(task.filename, { create: true });
-                    const writable = await fileHandle.createWritable();
-                    await writable.write(arrayBuffer);
-                    await writable.close();
-                    
-                    count++;
-                    const pct = Math.round((count / tasks.length) * 100);
-                    document.getElementById('progress-fill-bar').style.width = `${pct}%`;
-                    document.getElementById('progress-text-pct').textContent = `${pct}%`;
-                    log(`[SUCCESS] Installed ${task.filename}`);
-                }
-                
-                document.getElementById('progress-phase-label').textContent = 'step: installation completed';
-                log(`[SUCCESS] All ${tasks.length} files installed successfully!`);
-                document.getElementById('btn-close-progress').disabled = false;
-                
-                await fetchInstanceDataBrowser();
-            } catch (err) {
-                log(`[ERROR] Installation failed: ${err.message}`);
-                document.getElementById('progress-phase-label').textContent = 'step: installation failed';
-                document.getElementById('btn-close-progress').disabled = false;
             }
         }
 

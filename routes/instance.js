@@ -29,7 +29,7 @@ router.get('/api/instance', async (req, res) => {
         // mods count
         const modsDir = path.join(instancePath, 'mods');
         let modsCount = 0;
-        let loaderType = "Vanilla";
+        let loaderType = "Unknown";
         if (fs.existsSync(modsDir)) {
             const modFiles = fs.readdirSync(modsDir);
             modsCount = modFiles.filter(f => f.toLowerCase().endsWith('.jar')).length;
@@ -93,10 +93,10 @@ router.get('/api/instance', async (req, res) => {
         }
 
         // launcher profile details
-        let loaderVersion = "0.15.3";
-        let mcVersion = "1.20.1";
-        let allocatedRam = "4 GB";
-        let javaVersion = "Java 17";
+        let loaderVersion = "Unknown";
+        let mcVersion = "Unknown";
+        let allocatedRam = "Unknown";
+        let javaVersion = "Unknown";
 
         const defaultMc = path.join(instancePath, '..', '..');
         const profilesPath = path.join(defaultMc, 'launcher_profiles.json');
@@ -116,6 +116,8 @@ router.get('/api/instance', async (req, res) => {
                                     }
                                 } else if (verParts.includes('forge')) {
                                     loaderType = "Forge";
+                                } else {
+                                    loaderType = "Vanilla";
                                 }
                                 const lastPart = verParts[verParts.length - 1];
                                 if (/^\d+\.\d+(\.\d+)?$/.test(lastPart)) {
