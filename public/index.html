@@ -1907,6 +1907,7 @@
         let installedMods = [];
         let installedResourcepacks = [];
         let installedShaders = [];
+        let installedDatapacks = [];
         
         let activeWorldDirName = null;
         let searchResults = [];
@@ -2384,6 +2385,21 @@
 
                 const data = await res.json();
                 currentInstancePath = data.instancePath;
+
+                // Fetch datapacks if a world is selected
+                const targetWorld = getActiveWorldDirName();
+                if (targetWorld) {
+                    try {
+                        const dpRes = await fetch(`/api/worlds/datapacks?instancePath=${encodeURIComponent(currentInstancePath)}&worldName=${encodeURIComponent(targetWorld)}`);
+                        if (dpRes.ok) {
+                            installedDatapacks = await dpRes.json();
+                        }
+                    } catch (e) {
+                        console.error("Failed to fetch datapacks:", e);
+                    }
+                } else {
+                    installedDatapacks = [];
+                }
                 
                 // Hide setup blocker
                 hideInstanceSetupBlocker();
@@ -2659,6 +2675,12 @@
         // ==========================================
         // Module 3.8: Installed Addon Detection Helpers
         // ==========================================
+        function getActiveWorldDirName() {
+            if (activeWorldDirName) return activeWorldDirName;
+            if (activeWorld) return activeWorld.directoryName;
+            return null;
+        }
+
         function matchAddon(filename, project) {
             if (!filename || !project) return false;
             
@@ -2670,37 +2692,30 @@
             const dotIdx = cleanFn.lastIndexOf('.');
             const fnWithoutExt = dotIdx !== -1 ? cleanFn.substring(0, dotIdx) : cleanFn;
             
-            // Strip non-alphanumeric for a fallback loose comparison
+            // Strip non-alphanumeric
             const strip = (s) => s.replace(/[^a-z0-9]/g, '');
             const strippedFn = strip(fnWithoutExt);
             const strippedSlug = strip(cleanSlug);
             const strippedTitle = strip(cleanTitle);
             
-            // 1. Check exact prefix/word boundaries
-            const checkMatch = (term) => {
-                if (!term) return false;
-                if (fnWithoutExt === term) return true;
-                if (fnWithoutExt.startsWith(term + '-') || fnWithoutExt.startsWith(term + '_') || fnWithoutExt.startsWith(term + ' ')) return true;
-                
-                const index = fnWithoutExt.indexOf(term);
-                if (index !== -1) {
-                    const charBefore = index > 0 ? fnWithoutExt[index - 1] : '';
-                    const charAfter = index + term.length < fnWithoutExt.length ? fnWithoutExt[index + term.length] : '';
-                    const isWordBoundary = (char) => !char || /[^a-z0-9]/.test(char);
-                    if (isWordBoundary(charBefore) && isWordBoundary(charAfter)) {
-                        return true;
-                    }
-                }
-                return false;
-            };
+            // 1. Direct sub-string or exact matches
+            if (strippedSlug && (strippedFn.includes(strippedSlug) || strippedSlug.includes(strippedFn))) return true;
+            if (strippedTitle && (strippedFn.includes(strippedTitle) || strippedTitle.includes(strippedFn))) return true;
             
-            if (checkMatch(cleanSlug) || checkMatch(cleanTitle.replace(/ /g, '-')) || checkMatch(cleanTitle)) {
-                return true;
+            // 2. Word-by-word checking (ignoring common keywords)
+            const commonKeywords = new Set(['fabric', 'forge', 'mc', 'api', 'mod', 'minecraft', 'loader', 'client', 'server', 'version', 'lib', 'library']);
+            const slugWords = cleanSlug.split(/[^a-z0-9]+/).filter(w => w && !commonKeywords.has(w));
+            const titleWords = cleanTitle.split(/[^a-z0-9]+/).filter(w => w && !commonKeywords.has(w));
+            
+            // If we have meaningful unique words in the slug/title, check if all of them are present in the filename
+            if (slugWords.length > 0) {
+                const allWordsInFn = slugWords.every(w => strippedFn.includes(w));
+                if (allWordsInFn) return true;
             }
-            
-            // 2. Loose matching for stripped strings
-            if (strippedSlug && (strippedFn.startsWith(strippedSlug) || strippedFn === strippedSlug)) return true;
-            if (strippedTitle && (strippedFn.startsWith(strippedTitle) || strippedFn === strippedTitle)) return true;
+            if (titleWords.length > 0) {
+                const allWordsInFn = titleWords.every(w => strippedFn.includes(w));
+                if (allWordsInFn) return true;
+            }
             
             return false;
         }
@@ -2714,6 +2729,8 @@
                 list = installedResourcepacks.map(rp => rp.name);
             } else if (project.project_type === 'shader') {
                 list = installedShaders.map(sh => sh.name);
+            } else if (project.project_type === 'datapack') {
+                list = installedDatapacks.map(dp => dp.name);
             }
             
             for (const file of list) {
@@ -3141,6 +3158,7 @@
             if (!world) return;
 
             activeWorld = world;
+            fetchInstanceData(); // Retrieve datapacks for the newly selected active world!
             
             const cards = document.querySelectorAll('.world-card');
             cards.forEach(c => c.classList.remove('selected'));
@@ -3688,6 +3706,13 @@
                 targetFolder = 'resourcepacks';
             } else if (selectedProject.project_type === 'shader') {
                 targetFolder = 'shaderpacks';
+            } else if (selectedProject.project_type === 'datapack') {
+                const targetWorld = getActiveWorldDirName();
+                if (!targetWorld) {
+                    alert("No active world selected.");
+                    return;
+                }
+                targetFolder = `saves/${targetWorld}/datapacks`;
             }
             
             if (!confirm(`Are you sure you want to uninstall ${selectedProject.title}?`)) {
