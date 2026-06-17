@@ -269,4 +269,36 @@ async function runInstallationSequence() {
     }
 }
 
+/**
+ * POST /api/uninstall
+ * Uninstall / delete a specific addon file from the instance
+ */
+router.post('/api/uninstall', (req, res) => {
+    try {
+        const { instancePath, targetFolder, filename } = req.body;
+        if (!instancePath || !targetFolder || !filename) {
+            return res.status(400).json({ error: "Missing parameters" });
+        }
+        
+        // Prevent path traversal
+        const cleanFolder = targetFolder.replace(/\.\./g, '');
+        const cleanFilename = path.basename(filename);
+        
+        const filePath = path.join(instancePath, cleanFolder, cleanFilename);
+        if (fs.existsSync(filePath)) {
+            const stats = fs.statSync(filePath);
+            if (stats.isDirectory()) {
+                deleteRecursive(filePath);
+            } else {
+                fs.unlinkSync(filePath);
+            }
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: "File not found" });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;

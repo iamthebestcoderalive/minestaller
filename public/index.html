@@ -841,6 +841,13 @@
         .search-row:hover {
             border-color: var(--accent);
         }
+        .search-row.installed {
+            border-color: var(--accent);
+            background: color-mix(in srgb, var(--accent) 6%, var(--bg-card));
+        }
+        .search-row.installed .search-row-icon-wrapper {
+            border-color: var(--accent);
+        }
         .search-row-info {
             display: flex;
             flex-direction: column;
@@ -1896,6 +1903,10 @@
         let installPollInterval = null;
         let agentPollInterval = null;
         let activeInstanceLoader = "Unknown";
+
+        let installedMods = [];
+        let installedResourcepacks = [];
+        let installedShaders = [];
         
         let activeWorldDirName = null;
         let searchResults = [];
@@ -2441,6 +2452,24 @@
 
         // Bind data values from API response to DOM elements
         function bindInstanceData(data) {
+            // Populate global installed state variables
+            installedMods = (data.mods && data.mods.list) ? data.mods.list : [];
+            installedResourcepacks = data.resourcepacks || [];
+            installedShaders = data.shaders || [];
+
+            // If search results are currently shown, update their visual state (colors / badges)
+            if (searchResults && searchResults.length > 0) {
+                renderSearchResults();
+            }
+
+            // If details panel is currently open, refresh the buttons (e.g. show uninstall if installed)
+            if (selectedProject) {
+                const pane = document.getElementById('context-pane');
+                if (pane && pane.classList.contains('open')) {
+                    selectProject(selectedProject.project_id);
+                }
+            }
+
             // Status console line
             document.getElementById('status-dir').innerHTML = `...\\<span style="color:var(--accent); font-weight:bold;">${data.instanceName}</span>`;
             document.getElementById('status-version').textContent = data.mcVersion;
@@ -2628,6 +2657,78 @@
         }
 
         // ==========================================
+        // Module 3.8: Installed Addon Detection Helpers
+        // ==========================================
+        function matchAddon(filename, project) {
+            if (!filename || !project) return false;
+            
+            const cleanFn = filename.toLowerCase();
+            const cleanSlug = (project.slug || "").toLowerCase();
+            const cleanTitle = (project.title || "").toLowerCase();
+            
+            // Remove extension
+            const dotIdx = cleanFn.lastIndexOf('.');
+            const fnWithoutExt = dotIdx !== -1 ? cleanFn.substring(0, dotIdx) : cleanFn;
+            
+            // Strip non-alphanumeric for a fallback loose comparison
+            const strip = (s) => s.replace(/[^a-z0-9]/g, '');
+            const strippedFn = strip(fnWithoutExt);
+            const strippedSlug = strip(cleanSlug);
+            const strippedTitle = strip(cleanTitle);
+            
+            // 1. Check exact prefix/word boundaries
+            const checkMatch = (term) => {
+                if (!term) return false;
+                if (fnWithoutExt === term) return true;
+                if (fnWithoutExt.startsWith(term + '-') || fnWithoutExt.startsWith(term + '_') || fnWithoutExt.startsWith(term + ' ')) return true;
+                
+                const index = fnWithoutExt.indexOf(term);
+                if (index !== -1) {
+                    const charBefore = index > 0 ? fnWithoutExt[index - 1] : '';
+                    const charAfter = index + term.length < fnWithoutExt.length ? fnWithoutExt[index + term.length] : '';
+                    const isWordBoundary = (char) => !char || /[^a-z0-9]/.test(char);
+                    if (isWordBoundary(charBefore) && isWordBoundary(charAfter)) {
+                        return true;
+                    }
+                }
+                return false;
+            };
+            
+            if (checkMatch(cleanSlug) || checkMatch(cleanTitle.replace(/ /g, '-')) || checkMatch(cleanTitle)) {
+                return true;
+            }
+            
+            // 2. Loose matching for stripped strings
+            if (strippedSlug && (strippedFn.startsWith(strippedSlug) || strippedFn === strippedSlug)) return true;
+            if (strippedTitle && (strippedFn.startsWith(strippedTitle) || strippedFn === strippedTitle)) return true;
+            
+            return false;
+        }
+
+        function getInstalledAddonFilename(project) {
+            if (!project) return null;
+            let list = [];
+            if (project.project_type === 'mod') {
+                list = installedMods;
+            } else if (project.project_type === 'resourcepack') {
+                list = installedResourcepacks.map(rp => rp.name);
+            } else if (project.project_type === 'shader') {
+                list = installedShaders.map(sh => sh.name);
+            }
+            
+            for (const file of list) {
+                if (matchAddon(file, project)) {
+                    return file;
+                }
+            }
+            return null;
+        }
+
+        function isAddonInstalled(project) {
+            return getInstalledAddonFilename(project) !== null;
+        }
+
+        // ==========================================
         // Module 4: Addon Installer (Search Modrinth)
         // ==========================================
         function renderSearchResults() {
@@ -2639,21 +2740,36 @@
 
             container.innerHTML = searchResults.map(hit => {
                 const inCart = isCartMode && cart.some(c => c.project_id === hit.project_id);
-                const cardStyle = inCart ? 'border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.04);' : '';
-                const titleStyle = inCart ? 'color: #ef4444; font-weight: bold;' : '';
+                const isInstalled = isAddonInstalled(hit);
                 
+                let cardClass = "search-row";
+                if (isInstalled) {
+                    cardClass += " installed";
+                }
+                
+                let cardStyle = '';
+                let titleStyle = '';
+                if (inCart) {
+                    cardStyle = 'border: 1px solid #ef4444; background: rgba(239, 68, 68, 0.04);';
+                    titleStyle = 'color: #ef4444; font-weight: bold;';
+                }
+
+                const badgeHtml = inCart 
+                    ? '<span style="font-size:9px; color:#ef4444; margin-left:6px; font-weight:bold; text-transform:uppercase;">[in cart]</span>' 
+                    : (isInstalled ? '<span style="font-size:9px; color:var(--accent); margin-left:6px; font-weight:bold; text-transform:uppercase;">[installed]</span>' : '');
+
                 return `
-                    <div class="search-row" style="${cardStyle}" onclick="selectProject('${hit.project_id}')">
+                    <div class="${cardClass}" style="${cardStyle}" onclick="selectProject('${hit.project_id}')">
                         <div style="display:flex; gap:12px; align-items:center;">
                             <div class="search-row-icon-wrapper" style="${inCart ? 'border-color: #ef4444;' : ''}">
                                 ${hit.icon_url ? `<img src="${hit.icon_url}" class="search-row-icon-img" alt="" onerror="this.parentElement.innerHTML='<div class=search-row-icon-fallback>${hit.title[0]}</div>'">` : `<div class="search-row-icon-fallback">${hit.title[0]}</div>`}
                             </div>
                             <div class="search-row-info">
-                                <div class="search-row-title" style="${titleStyle}">${hit.title} ${inCart ? '<span style="font-size:9px; color:#ef4444; margin-left:6px; font-weight:bold; text-transform:uppercase;">[in cart]</span>' : ''}</div>
+                                <div class="search-row-title" style="${titleStyle}">${hit.title} ${badgeHtml}</div>
                                 <div class="search-row-sub">by ${hit.author} | downloads: ${hit.downloads.toLocaleString()}</div>
                             </div>
                         </div>
-                        <span class="search-row-type" style="${inCart ? 'border-color: #ef4444; color: #ef4444;' : ''}">${hit.project_type}</span>
+                        <span class="search-row-type" style="${inCart ? 'border-color: #ef4444; color: #ef4444;' : (isInstalled ? 'border-color: var(--accent); color: var(--accent);' : '')}">${hit.project_type}</span>
                     </div>
                 `;
             }).join('');
@@ -2758,7 +2874,9 @@
             const isModdingType = project.project_type === 'mod' || project.project_type === 'modpack';
 
             let actionBtnHtml = '';
-            if (isVanilla && isModdingType) {
+            if (isAddonInstalled(project)) {
+                actionBtnHtml = `<button class="btn" style="background: #ef4444; border-color: #ef4444; color: white; width: 100%; font-weight: bold; transition: opacity 0.2s;" onmouseover="this.style.opacity=0.9" onmouseout="this.style.opacity=1" onclick="uninstallAddon()">uninstall</button>`;
+            } else if (isVanilla && isModdingType) {
                 actionBtnHtml = `
                     <div style="color: var(--warning); font-size: 11px; font-family: var(--font-sans); display: flex; align-items: center; gap: 8px; background: rgba(255, 157, 0, 0.05); border: 1px dashed var(--warning); padding: 10px; border-radius: 4px; line-height: 1.4; margin-top: 6px;">
                         <i class="ti ti-alert-triangle" style="font-size: 15px; flex-shrink: 0; color: var(--warning);"></i>
@@ -3553,6 +3671,49 @@
                 }
             } catch (e) {
                 alert("Failed resolving dependencies: " + e.message);
+            }
+        }
+
+        async function uninstallAddon() {
+            if (!selectedProject) return;
+            
+            const filename = getInstalledAddonFilename(selectedProject);
+            if (!filename) {
+                alert("Could not find installed file for this addon.");
+                return;
+            }
+            
+            let targetFolder = 'mods';
+            if (selectedProject.project_type === 'resourcepack') {
+                targetFolder = 'resourcepacks';
+            } else if (selectedProject.project_type === 'shader') {
+                targetFolder = 'shaderpacks';
+            }
+            
+            if (!confirm(`Are you sure you want to uninstall ${selectedProject.title}?`)) {
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/uninstall', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        instancePath: currentInstancePath,
+                        targetFolder,
+                        filename
+                    })
+                });
+                
+                if (res.ok) {
+                    alert(`Successfully uninstalled ${selectedProject.title}`);
+                    await fetchInstanceData();
+                } else {
+                    const data = await res.json();
+                    alert("Failed to uninstall: " + (data.error || "Unknown error"));
+                }
+            } catch (e) {
+                alert("Error during uninstall request: " + e.message);
             }
         }
 

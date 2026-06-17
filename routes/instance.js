@@ -29,14 +29,17 @@ router.get('/api/instance', async (req, res) => {
         // mods count
         const modsDir = path.join(instancePath, 'mods');
         let modsCount = 0;
+        let modsList = [];
         let loaderType = "Unknown";
         if (fs.existsSync(modsDir)) {
             const modFiles = fs.readdirSync(modsDir);
-            modsCount = modFiles.filter(f => f.toLowerCase().endsWith('.jar')).length;
+            const jars = modFiles.filter(f => f.toLowerCase().endsWith('.jar'));
+            modsCount = jars.length;
+            modsList = jars;
             
             let hasFabricApi = false;
             let hasForge = false;
-            for (const file of modFiles) {
+            for (const file of jars) {
                 const lower = file.toLowerCase();
                 if (lower.includes('fabric-api') || lower.includes('fabric-language-kotlin')) {
                     hasFabricApi = true;
@@ -191,7 +194,7 @@ router.get('/api/instance', async (req, res) => {
             instanceSizeMB,
             status: "ready",
             modrinthOnline: true,
-            mods: { total: modsCount },
+            mods: { total: modsCount, list: modsList },
             worlds: { total: worldsCount },
             resourcepacks,
             shaders,
