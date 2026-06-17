@@ -1895,6 +1895,7 @@
         let selectedProject = null;
         let installPollInterval = null;
         let agentPollInterval = null;
+        let activeInstanceLoader = "Unknown";
         
         let activeWorldDirName = null;
         let searchResults = [];
@@ -2567,6 +2568,28 @@
             }
 
             document.getElementById('footer-queue').textContent = `${cart.length} queued · ${truncatePath(data.instancePath)}`;
+            activeInstanceLoader = data.loader;
+            checkLoaderAndDisableModding();
+        }
+
+        function checkLoaderAndDisableModding() {
+            const selectEl = document.getElementById('search-type-select');
+            if (!selectEl) return;
+            
+            const isVanilla = activeInstanceLoader && activeInstanceLoader.toLowerCase() === 'vanilla';
+            const modOption = selectEl.querySelector('option[value="mod"]');
+            const modpackOption = selectEl.querySelector('option[value="modpack"]');
+            
+            if (isVanilla) {
+                if (modOption) modOption.disabled = true;
+                if (modpackOption) modpackOption.disabled = true;
+                if (selectEl.value === 'mod' || selectEl.value === 'modpack') {
+                    selectEl.value = 'resourcepack';
+                }
+            } else {
+                if (modOption) modOption.disabled = false;
+                if (modpackOption) modpackOption.disabled = false;
+            }
         }
 
         // ==========================================
@@ -2601,6 +2624,7 @@
                 loadBackups();
             }
             closeContextPane();
+            checkLoaderAndDisableModding();
         }
 
         // ==========================================
@@ -2730,11 +2754,23 @@
             const isCartMode = document.getElementById('cart-mode-check').checked;
             const inCart = cart.some(c => c.project_id === projectId);
 
+            const isVanilla = activeInstanceLoader && activeInstanceLoader.toLowerCase() === 'vanilla';
+            const isModdingType = project.project_type === 'mod' || project.project_type === 'modpack';
+
             let actionBtnHtml = '';
-            if (isCartMode) {
-                actionBtnHtml = `<button class="btn btn-primary" onclick="toggleCartItem()">${inCart ? 'remove from cart' : 'add to cart'}</button>`;
+            if (isVanilla && isModdingType) {
+                actionBtnHtml = `
+                    <div style="color: var(--warning); font-size: 11px; font-family: var(--font-sans); display: flex; align-items: center; gap: 8px; background: rgba(255, 157, 0, 0.05); border: 1px dashed var(--warning); padding: 10px; border-radius: 4px; line-height: 1.4; margin-top: 6px;">
+                        <i class="ti ti-alert-triangle" style="font-size: 15px; flex-shrink: 0; color: var(--warning);"></i>
+                        <span>Modding is disabled for Vanilla instances. Please install a mod loader (Fabric/Forge) to install mods or modpacks.</span>
+                    </div>
+                `;
             } else {
-                actionBtnHtml = `<button class="btn btn-primary" onclick="initiateSingleInstall()">download & install</button>`;
+                if (isCartMode) {
+                    actionBtnHtml = `<button class="btn btn-primary" onclick="toggleCartItem()">${inCart ? 'remove from cart' : 'add to cart'}</button>`;
+                } else {
+                    actionBtnHtml = `<button class="btn btn-primary" onclick="initiateSingleInstall()">download & install</button>`;
+                }
             }
 
             const content = document.getElementById('context-content');
@@ -3450,6 +3486,13 @@
         async function checkoutCart() {
             if (cart.length === 0) return;
 
+            const isVanilla = activeInstanceLoader && activeInstanceLoader.toLowerCase() === 'vanilla';
+            const hasModdingItems = cart.some(c => c.project_type === 'mod' || c.project_type === 'modpack');
+            if (isVanilla && hasModdingItems) {
+                alert("Installation cancelled: You cannot install mods or modpacks on a Vanilla instance.");
+                return;
+            }
+
             let targetWorld = null;
             const hasDatapacks = cart.some(c => c.project_type === 'datapack');
             if (hasDatapacks) {
@@ -3486,6 +3529,13 @@
 
         async function initiateSingleInstall() {
             if (!selectedProject) return;
+
+            const isVanilla = activeInstanceLoader && activeInstanceLoader.toLowerCase() === 'vanilla';
+            const isModdingType = selectedProject.project_type === 'mod' || selectedProject.project_type === 'modpack';
+            if (isVanilla && isModdingType) {
+                alert("Installation cancelled: You cannot install mods or modpacks on a Vanilla instance.");
+                return;
+            }
 
             let targetWorld = null;
             if (selectedProject.project_type === 'datapack') {
