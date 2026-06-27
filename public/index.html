@@ -2160,8 +2160,21 @@
                 for (const ver of sortedVersions) {
                     const gameVerMatch = ver.game_versions.includes(mcVersion);
                     if (gameVerMatch) {
-                        compatibleVersion = ver;
-                        break;
+                        const verLoaders = ver.loaders.map(l => l.toLowerCase());
+                        let isCrossLoaderCompatible = false;
+                        if (loader === 'fabric') {
+                            isCrossLoaderCompatible = verLoaders.includes('fabric') || verLoaders.includes('quilt');
+                        } else if (loader === 'forge') {
+                            isCrossLoaderCompatible = verLoaders.includes('forge');
+                        } else if (loader === 'neoforge') {
+                            isCrossLoaderCompatible = verLoaders.includes('neoforge') || verLoaders.includes('forge');
+                        } else {
+                            isCrossLoaderCompatible = true;
+                        }
+                        if (isCrossLoaderCompatible) {
+                            compatibleVersion = ver;
+                            break;
+                        }
                     }
                 }
             }
@@ -2817,7 +2830,7 @@
                 facetsArray.push([`versions:${mcVersion}`]);
             }
             
-            if (type === 'modpack' && activeInstanceLoader && activeInstanceLoader !== 'Unknown' && activeInstanceLoader !== 'Vanilla') {
+            if ((type === 'modpack' || type === 'mod') && activeInstanceLoader && activeInstanceLoader !== 'Unknown' && activeInstanceLoader !== 'Vanilla') {
                 facetsArray.push([`categories:${activeInstanceLoader.toLowerCase()}`]);
             }
             

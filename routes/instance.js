@@ -133,9 +133,18 @@ router.get('/api/instance', async (req, res) => {
                                 } else {
                                     loaderType = "Vanilla";
                                 }
-                                const lastPart = verParts[verParts.length - 1];
-                                if (/^\d+\.\d+(\.\d+)?$/.test(lastPart)) {
-                                    mcVersion = lastPart;
+                                // Search for Minecraft version in the version parts
+                                for (const part of verParts) {
+                                    if (/^1\.\d+(\.\d+)?$/.test(part)) {
+                                        mcVersion = part;
+                                        break;
+                                    }
+                                }
+                                if (mcVersion === "Unknown") {
+                                    const lastPart = verParts[verParts.length - 1];
+                                    if (/^\d+\.\d+(\.\d+)?$/.test(lastPart)) {
+                                        mcVersion = lastPart;
+                                    }
                                 }
                             }
                             if (prof.javaArgs) {
@@ -157,6 +166,11 @@ router.get('/api/instance', async (req, res) => {
             if (fs.existsSync(logPath)) {
                 try {
                     const content = fs.readFileSync(logPath, 'utf8');
+                    const lowerContent = content.toLowerCase();
+                    if (lowerContent.includes('neoforge') || lowerContent.includes('neoforged')) {
+                        if (loaderType === "Unknown") loaderType = "NeoForge";
+                    }
+
                     // Fabric signature: "Loading Minecraft 1.20.1 with Fabric Loader"
                     const fabricMatch = content.match(/Loading Minecraft ([0-9\.]+) with Fabric Loader/i);
                     if (fabricMatch) {
@@ -171,7 +185,7 @@ router.get('/api/instance', async (req, res) => {
                         if (loaderVersion === "Unknown") loaderVersion = neoforgeMatch[1];
                     }
                     const neoforgeMcMatch = content.match(/Minecraft Version: ([0-9\.]+)/i);
-                    if (neoforgeMcMatch && content.toLowerCase().includes('neoforge')) {
+                    if (neoforgeMcMatch && lowerContent.includes('neoforge')) {
                         mcVersion = neoforgeMcMatch[1];
                         if (loaderType === "Unknown") loaderType = "NeoForge";
                     }
@@ -206,6 +220,32 @@ router.get('/api/instance', async (req, res) => {
             if (dirName.includes('neoforge')) loaderType = "NeoForge";
             else if (dirName.includes('fabric')) loaderType = "Fabric";
             else if (dirName.includes('forge')) loaderType = "Forge";
+        }
+
+        // Fallback 3: Map NeoForge version (e.g. 20.4.80) to Minecraft version (e.g. 1.20.4)
+        if (loaderType === "NeoForge" && (mcVersion === "Unknown" || !mcVersion)) {
+            if (loaderVersion && /^\d+\.\d+(\.\d+)?$/.test(loaderVersion)) {
+                const parts = loaderVersion.split('.');
+                const major = parts[0];
+                const minor = parts[1];
+                if (minor === '0') {
+                    mcVersion = `1.${major}`;
+                } else {
+                    mcVersion = `1.${major}.${minor}`;
+                }
+            } else {
+                const dirName = path.basename(instancePath);
+                const neoforgeVersionMatch = dirName.match(/\b(2\d+)\.(\d+)(\.\d+)?\b/);
+                if (neoforgeVersionMatch) {
+                    const major = neoforgeVersionMatch[1];
+                    const minor = neoforgeVersionMatch[2];
+                    if (minor === '0') {
+                        mcVersion = `1.${major}`;
+                    } else {
+                        mcVersion = `1.${major}.${minor}`;
+                    }
+                }
+            }
         }
 
         // modpack checking & dynamic icon resolving
