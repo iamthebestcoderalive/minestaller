@@ -2709,7 +2709,7 @@
             if (strippedTitle && (strippedFn.includes(strippedTitle) || strippedTitle.includes(strippedFn))) return true;
             
             // 2. Word-by-word checking (ignoring common keywords)
-            const commonKeywords = new Set(['fabric', 'forge', 'mc', 'api', 'mod', 'minecraft', 'loader', 'client', 'server', 'version', 'lib', 'library']);
+            const commonKeywords = new Set(['fabric', 'forge', 'neoforge', 'neoforged', 'mc', 'api', 'mod', 'minecraft', 'loader', 'client', 'server', 'version', 'lib', 'library']);
             const slugWords = cleanSlug.split(/[^a-z0-9]+/).filter(w => w && !commonKeywords.has(w));
             const titleWords = cleanTitle.split(/[^a-z0-9]+/).filter(w => w && !commonKeywords.has(w));
             
@@ -2913,7 +2913,7 @@
                 actionBtnHtml = `
                     <div style="color: var(--warning); font-size: 11px; font-family: var(--font-sans); display: flex; align-items: center; gap: 8px; background: rgba(255, 157, 0, 0.05); border: 1px dashed var(--warning); padding: 10px; border-radius: 4px; line-height: 1.4; margin-top: 6px;">
                         <i class="ti ti-alert-triangle" style="font-size: 15px; flex-shrink: 0; color: var(--warning);"></i>
-                        <span>Modding is disabled for Vanilla instances. Please install a mod loader (Fabric/Forge) to install mods or modpacks.</span>
+                        <span>Modding is disabled for Vanilla instances. Please install a mod loader (Fabric/Forge/NeoForge) to install mods or modpacks.</span>
                     </div>
                 `;
             } else {

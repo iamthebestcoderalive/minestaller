@@ -39,16 +39,21 @@ router.get('/api/instance', async (req, res) => {
             
             let hasFabricApi = false;
             let hasForge = false;
+            let hasNeoForge = false;
             for (const file of jars) {
                 const lower = file.toLowerCase();
                 if (lower.includes('fabric-api') || lower.includes('fabric-language-kotlin')) {
                     hasFabricApi = true;
                 }
-                if (lower.includes('forge') && !lower.includes('fabric')) {
+                if (lower.includes('neoforge') || lower.includes('neoforged')) {
+                    hasNeoForge = true;
+                }
+                if (lower.includes('forge') && !lower.includes('fabric') && !lower.includes('neoforge')) {
                     hasForge = true;
                 }
             }
-            if (hasFabricApi) loaderType = "Fabric";
+            if (hasNeoForge) loaderType = "NeoForge";
+            else if (hasFabricApi) loaderType = "Fabric";
             else if (hasForge) loaderType = "Forge";
         }
 
@@ -111,7 +116,13 @@ router.get('/api/instance', async (req, res) => {
                         if (prof.gameDir && path.resolve(prof.gameDir).toLowerCase() === path.resolve(instancePath).toLowerCase()) {
                             if (prof.lastVersionId) {
                                 const verParts = prof.lastVersionId.split('-');
-                                if (verParts.includes('fabric')) {
+                                if (verParts.includes('neoforge')) {
+                                    loaderType = "NeoForge";
+                                    const loaderIdx = verParts.indexOf('neoforge');
+                                    if (loaderIdx !== -1 && verParts[loaderIdx + 1]) {
+                                        loaderVersion = verParts[loaderIdx + 1];
+                                    }
+                                } else if (verParts.includes('fabric')) {
                                     loaderType = "Fabric";
                                     const loaderIdx = verParts.indexOf('loader');
                                     if (loaderIdx !== -1 && verParts[loaderIdx + 1]) {
@@ -153,6 +164,18 @@ router.get('/api/instance', async (req, res) => {
                         if (loaderType === "Unknown") loaderType = "Fabric";
                     }
                     
+                    // NeoForge signatures
+                    const neoforgeMatch = content.match(/NeoForge version ([0-9\.\-a-zA-Z]+)/i);
+                    if (neoforgeMatch) {
+                        if (loaderType === "Unknown") loaderType = "NeoForge";
+                        if (loaderVersion === "Unknown") loaderVersion = neoforgeMatch[1];
+                    }
+                    const neoforgeMcMatch = content.match(/Minecraft Version: ([0-9\.]+)/i);
+                    if (neoforgeMcMatch && content.toLowerCase().includes('neoforge')) {
+                        mcVersion = neoforgeMcMatch[1];
+                        if (loaderType === "Unknown") loaderType = "NeoForge";
+                    }
+                    
                     // Forge/General signatures
                     if (mcVersion === "Unknown") {
                         const forgeMcMatch = content.match(/Minecraft Version: ([0-9\.]+)/i);
@@ -177,6 +200,12 @@ router.get('/api/instance', async (req, res) => {
             if (versionMatch) {
                 mcVersion = versionMatch[1];
             }
+        }
+        if (loaderType === "Unknown") {
+            const dirName = path.basename(instancePath).toLowerCase();
+            if (dirName.includes('neoforge')) loaderType = "NeoForge";
+            else if (dirName.includes('fabric')) loaderType = "Fabric";
+            else if (dirName.includes('forge')) loaderType = "Forge";
         }
 
         // modpack checking & dynamic icon resolving
