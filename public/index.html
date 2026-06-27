@@ -2826,7 +2826,7 @@
                 [`project_type:${type}`]
             ];
             
-            if (mcVersion && mcVersion !== '--' && mcVersion !== 'Unknown') {
+            if (mcVersion && mcVersion !== '--' && mcVersion !== 'Unknown' && mcVersion.startsWith('1.')) {
                 facetsArray.push([`versions:${mcVersion}`]);
             }
             

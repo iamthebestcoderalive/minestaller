@@ -248,6 +248,22 @@ router.get('/api/instance', async (req, res) => {
             }
         }
 
+        // Ensure mcVersion is a valid Minecraft version starting with 1.
+        if (mcVersion && !mcVersion.startsWith('1.') && mcVersion !== 'Unknown') {
+            if (loaderType === "NeoForge" && /^\d+\.\d+(\.\d+)?$/.test(mcVersion)) {
+                const parts = mcVersion.split('.');
+                const major = parts[0];
+                const minor = parts[1];
+                if (minor === '0') {
+                    mcVersion = `1.${major}`;
+                } else {
+                    mcVersion = `1.${major}.${minor}`;
+                }
+            } else {
+                mcVersion = "Unknown";
+            }
+        }
+
         // modpack checking & dynamic icon resolving
         let modpack = { detected: false };
         if (fs.existsSync(GLOBAL_CONFIG_PATH)) {
